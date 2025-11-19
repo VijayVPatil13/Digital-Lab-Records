@@ -2,16 +2,13 @@
 import React, { useState } from 'react';
 import FacultyReviewModal from '../../components/role-specific/FacultyReviewModal';
 
-// Mock data for demonstration
 const mockSubmissions = [
-  { id: 1, student: 'Alice Smith', lab: 'Titration 1', text: 'The titration result was very precise...' },
-  { id: 2, student: 'Bob Johnson', lab: 'Spectroscopy', text: 'I observed absorption at 450nm and 600nm...' },
+  { id: 1, student: 'Alice Smith', lab: 'Titration 1', text: 'The titration result was very precise...', grade: null },
+  { id: 2, student: 'Bob Johnson', lab: 'Spectroscopy', text: 'I observed absorption at 450nm and 600nm...', grade: 'A-' },
 ];
 
 const LabReview = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  
-  // Logic to fetch submissions via GET /api/faculty/submissions/:labId
   
   return (
     <div className="space-y-6">
@@ -25,12 +22,16 @@ const LabReview = () => {
               <p className="font-semibold">{sub.lab} - {sub.student}</p>
               <p className="text-sm text-gray-500">{sub.text.substring(0, 70)}...</p>
             </div>
-            <button 
-              onClick={() => setSelectedSubmission(sub)}
-              className="bg-yellow-600 text-white p-2 rounded text-sm hover:bg-yellow-700"
-            >
-              Review
-            </button>
+            {sub.grade ? (
+                <span className="text-sm text-green-600 font-bold">Graded ({sub.grade})</span>
+            ) : (
+                <button 
+                  onClick={() => setSelectedSubmission(sub)}
+                  className="bg-yellow-600 text-white p-2 rounded text-sm hover:bg-yellow-700"
+                >
+                  Review
+                </button>
+            )}
           </div>
         ))}
       </div>

@@ -1,28 +1,17 @@
 // client/src/pages/LoginPage.js
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import LoginForm from '../components/forms/LoginForm';
+import SignupForm from '../components/forms/SignupForm'; 
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const [currentRole, setCurrentRole] = useState('Student'); 
+  const [isLoginView, setIsLoginView] = useState(true); 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      await login(email, password);
-      // Success: redirection handled by AuthProvider
-    } catch (err) {
-      // API error handling
-      const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials and try again.';
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const rolePresets = {
+    'Student': 'student@lab.edu',
+    'Faculty': 'faculty@lab.edu',
+    'Admin': 'admin@lab.edu',
   };
 
   return (
@@ -31,38 +20,57 @@ const LoginPage = () => {
         <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">
           Digital Lab System
         </h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-          {error && <p className="text-red-500 mb-4 text-center border p-2 bg-red-50 rounded text-sm">{error}</p>}
-          <button
-            type="submit"
-            className={`w-full p-3 rounded-lg text-white font-semibold transition ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-            disabled={isSubmitting}
+
+        {/* --- View Toggle Button (Login <-> Sign Up) --- */}
+        <div className="flex justify-center mb-4">
+          <button 
+            onClick={() => {
+              setIsLoginView(!isLoginView);
+              setError(null);
+            }}
+            className="text-sm text-blue-600 hover:text-blue-800 transition"
           >
-            {isSubmitting ? 'Logging in...' : 'Login'}
+            {isLoginView ? 'Need an account? Sign Up' : 'Already have an account? Log In'}
           </button>
-        </form>
+        </div>
+        
+        {error && <p className="text-red-500 mb-4 text-center border p-2 bg-red-50 rounded text-sm">{error}</p>}
+        
+        {isLoginView ? (
+          <>
+            {/* --- Role Selection Buttons for Login --- */}
+            <div className="mb-6 flex justify-around p-2 bg-gray-100 rounded-lg">
+              {Object.keys(rolePresets).map((role) => (
+                <button
+                  key={role}
+                  onClick={() => {
+                    setCurrentRole(role);
+                    setError(null);
+                  }}
+                  className={`py-2 px-4 rounded-lg font-semibold transition ${
+                    currentRole === role
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 hover:bg-blue-50'
+                  }`}
+                >
+                  Login as {role}
+                </button>
+              ))}
+            </div>
+            {/* --- End Role Selection Buttons --- */}
+
+            <LoginForm 
+              onError={setError} 
+              initialEmail={rolePresets[currentRole]}
+              initialPassword="securePass123" 
+            />
+          </>
+        ) : (
+          <SignupForm 
+            onError={setError} 
+            onSignupSuccess={() => setIsLoginView(true)} 
+          />
+        )}
       </div>
     </div>
   );

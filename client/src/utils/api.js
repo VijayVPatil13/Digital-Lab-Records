@@ -1,14 +1,27 @@
 // client/src/utils/api.js
+
 import axios from 'axios';
 
-// IMPORTANT: Replace with the actual URL where your Node.js/Express server is running
-const API_URL = 'http://localhost:5000/api'; 
+const API_BASE_URL = 'http://localhost:5000/api'; 
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token'); 
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default api;

@@ -2,14 +2,12 @@
 import React from 'react';
 import SubmissionForm from '../../components/forms/SubmissionForm';
 
-// Mock data for demonstration
 const mockLabs = [
   { id: 101, name: 'Titration 1', submitted: true, status: 'Reviewed', endDate: '2026-01-15' },
   { id: 102, name: 'Spectroscopy', submitted: false, status: 'Pending', endDate: '2026-02-01' },
 ];
 
 const MySubmissions = () => {
-  // Logic to fetch enrolled labs via GET /api/student/courses
   
   return (
     <div className="space-y-6">

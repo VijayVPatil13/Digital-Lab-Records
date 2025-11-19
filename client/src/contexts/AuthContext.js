@@ -1,5 +1,5 @@
 // client/src/contexts/AuthContext.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
 import api from '../utils/api';
@@ -7,24 +7,29 @@ import api from '../utils/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Stores decoded JWT payload: { id: '...', role: 'Admin' }
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Load token on initial render
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_data');
+    delete api.defaults.headers.common['Authorization'];
+    setUser(null);
+    navigate('/login');
+  }, [navigate]);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        
-        // Basic expiration check
         if (decoded.exp * 1000 < Date.now()) {
-          console.log("Token expired. Logging out.");
           logout();
         } else {
-          setUser(decoded);
-          // Set the Authorization header for all future requests
+          // Retrieve stored full user data
+          const storedUser = JSON.parse(localStorage.getItem('user_data')) || decoded;
+          setUser(storedUser); 
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
       } catch (e) {
@@ -33,37 +38,34 @@ export const AuthProvider = ({ children }) => {
       }
     }
     setLoading(false);
-  }, []);
+  }, [logout]); // FIX: Includes stable logout
 
   const login = async (email, password) => {
     try {
-      // 1. Send credentials to API
       const response = await api.post('/auth/login', { email, password });
       const token = response.data.token;
+      
+      const userData = {
+        id: response.data.id,
+        role: response.data.role,
+        firstName: response.data.firstName, 
+        lastName: response.data.lastName,   
+      };
 
-      // 2. Store and decode token
       localStorage.setItem('token', token);
-      const decoded = jwtDecode(token);
-      setUser(decoded);
+      localStorage.setItem('user_data', JSON.stringify(userData)); 
+      
+      setUser(userData);
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // 3. Role-Based Redirect
-      const role = decoded.role.toLowerCase();
+      const role = userData.role.toLowerCase();
       navigate(`/${role}`);
 
     } catch (error) {
       console.error('Login failed:', error);
-      // Clean up storage if token somehow became invalid during login attempt
       logout(); 
-      throw error; 
+      throw error;
     }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
-    setUser(null);
-    navigate('/login');
   };
 
   const value = {
@@ -75,6 +77,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin: user?.role === 'Admin',
     isFaculty: user?.role === 'Faculty',
     isStudent: user?.role === 'Student',
+    fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(), 
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

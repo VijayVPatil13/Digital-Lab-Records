@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 const ErrorPage = () => {
-  const { code } = useParams(); // Should catch route like /error/403
+  const { code } = useParams(); 
   
   const title = code === '403' ? "Access Denied (403)" : "Page Not Found (404)";
   const message = code === '403' 

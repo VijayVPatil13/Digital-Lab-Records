@@ -1,84 +1,61 @@
 // client/src/App.js
+
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom'; // Router IMPORT REMOVED
-import { useAuth } from './contexts/AuthContext';
-import LoginPage from './pages/LoginPage';
-import AdminDashboard from './pages/dashboards/AdminDashboard';
-import FacultyDashboard from './pages/dashboards/FacultyDashboard';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// --- Layout/Context Imports ---
+import { AuthProvider } from './contexts/AuthContext'; 
+import ProtectedRoute from './components/common/ProtectedRoute'; 
+import Layout from './components/common/Layout'; // Corrected component name/path
+import LoginPage from './pages/LoginPage'; // Assuming you have a separate Login page
+
+// --- Page Imports ---
 import StudentDashboard from './pages/dashboards/StudentDashboard';
+import FacultyDashboard from './pages/dashboards/FacultyDashboard';
+import SessionManager from './pages/SessionManager';   
+import SessionReview from './pages/SessionReview';   
+import LabSubmission from './pages/LabSubmission';     
 
-// --- Protected Route Component (Logic remains the same) ---
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, isAuth, loading } = useAuth();
+function App() {
+    return (
+        <AuthProvider>
+            <Router> {/* Single, top-level Router */}
+                <Routes>
+                    {/* --- Public Routes --- */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    
+                    {/* --- Protected Routes (Wrapped by Layout) --- */}
+                    <Route element={<Layout />}>
+                        
+                        {/* STUDENT ROUTES */}
+                        <Route 
+                            path="/student/dashboard" 
+                            element={<ProtectedRoute role="Student"><StudentDashboard /></ProtectedRoute>} 
+                        />
+                        <Route 
+                            path="/student/course/:courseId/labs" 
+                            element={<ProtectedRoute role="Student"><LabSubmission /></ProtectedRoute>} 
+                        />
 
-  if (loading) {
-    return <div className="text-center p-8 text-lg">Loading Application...</div>; 
-  }
-  
-  if (!isAuth) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // Note: Assuming you have created the ErrorPage.js file for /error/403
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/error/403" replace />;
-  }
+                        {/* FACULTY ROUTES */}
+                        <Route 
+                            path="/faculty/dashboard" 
+                            element={<ProtectedRoute role="Faculty"><FacultyDashboard /></ProtectedRoute>} 
+                        />
+                        <Route 
+                            path="/faculty/course/:courseId/sessions" 
+                            element={<ProtectedRoute role="Faculty"><SessionManager /></ProtectedRoute>} 
+                        />
+                        <Route 
+                            path="/faculty/session/:sessionId/review" 
+                            element={<ProtectedRoute role="Faculty"><SessionReview /></ProtectedRoute>} 
+                        />
 
-  return children;
-};
-
-// --- Helper for Initial Redirect (Logic remains the same) ---
-const HomeRedirect = () => {
-    const { user, isAuth, loading } = useAuth();
-    if (loading) return <div className="text-center p-8 text-lg">Initializing...</div>;
-    if (!isAuth) return <Navigate to="/login" replace />;
-    return <Navigate to={`/${user.role.toLowerCase()}`} replace />;
+                    </Route>
+                </Routes>
+            </Router>
+        </AuthProvider>
+    );
 }
-
-
-const App = () => {
-  return (
-    // <Router> tag removed here 
-      <Routes>
-        {/* Public Route */}
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Role-Based Protected Routes */}
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute allowedRoles={['Admin']}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/faculty" 
-          element={
-            <ProtectedRoute allowedRoles={['Faculty']}>
-              <FacultyDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/student" 
-          element={
-            <ProtectedRoute allowedRoles={['Student']}>
-              <StudentDashboard />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Default route */}
-        <Route path="/" element={<HomeRedirect />} />
-        
-        {/* Fallback */}
-        {/* Note: Ensure the ErrorPage component is available */}
-        <Route path="/error/:code" element={<div className="text-center p-10 text-3xl font-bold text-red-600">Error Page</div>} /> 
-        <Route path="*" element={<div className="text-center p-10 text-3xl font-bold text-red-600">404 Page Not Found</div>} />
-      </Routes>
-    // </Router> tag removed here
-  );
-};
 
 export default App;
