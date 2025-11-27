@@ -3,17 +3,10 @@ import React, { useState } from 'react';
 import LoginForm from '../components/forms/LoginForm'; 
 import RegisterForm from '../components/forms/RegisterForm'; 
 
-const rolePresets = {
-    faculty: { email: 'faculty@example.com', password: 'password123' },
-    student: { email: 'student1@example.com', password: 'password123' },
-};
-
 const LoginPage = () => {
     const [mode, setMode] = useState('login'); 
-    const [selectedRole, setSelectedRole] = useState('student'); 
+    const [selectedRole, setSelectedRole] = useState('student');
     const [authError, setAuthError] = useState(null);
-
-    const preset = rolePresets[selectedRole];
 
     const isLogin = mode === 'login';
 
@@ -45,25 +38,30 @@ const LoginPage = () => {
                         Register
                     </button>
                 </div>
-                
-                {/* Role Selector (Only for Login Presets) */}
+
+                {/* Role Selector (Only for Login) */}
                 {isLogin && (
                     <div className="flex justify-around space-x-2">
-                        {Object.keys(rolePresets).map((roleKey) => (
-                            <button
-                                key={roleKey}
-                                onClick={() => {
-                                    setSelectedRole(roleKey);
-                                    setAuthError(null);
-                                }}
-                                className={`w-1/3 p-2 rounded-lg font-medium text-sm transition ${selectedRole === roleKey ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                {roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}
-                            </button>
-                        ))}
+                        <button
+                            onClick={() => {
+                                setSelectedRole('faculty');
+                                setAuthError(null);
+                            }}
+                            className={`w-1/3 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'faculty' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            Faculty
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSelectedRole('student');
+                                setAuthError(null);
+                            }}
+                            className={`w-1/3 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'student' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            Student
+                        </button>
                     </div>
                 )}
-
 
                 {/* Error/Success Display */}
                 {authError && (
@@ -76,8 +74,6 @@ const LoginPage = () => {
                 {isLogin ? (
                     <LoginForm
                         onError={setAuthError}
-                        initialEmail={preset.email}
-                        initialPassword={preset.password}
                     />
                 ) : (
                     <RegisterForm

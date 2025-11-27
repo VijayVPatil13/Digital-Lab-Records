@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api'; 
 
-const LoginForm = ({ onError, initialEmail, initialPassword }) => {
+const LoginForm = ({ onError, initialEmail = '', initialPassword = '' }) => {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [isSubmitting, setIsSubmitting] = useState(false);
