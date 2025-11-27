@@ -60,6 +60,17 @@ const CourseForm = ({ onSubmit, onCancel, initialData = {} }) => {
                 />
             </div>
             <div>
+                <label className="block text-sm font-medium text-gray-700">Section</label>
+                <input 
+                    type="text" 
+                    name="section" 
+                    value={formData.section || ''} 
+                    onChange={handleChange} 
+                    className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+                    disabled={isSubmitting}
+                />
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-700">Description</label>
                 <textarea 
                     name="description" 

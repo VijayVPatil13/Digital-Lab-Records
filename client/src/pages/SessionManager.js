@@ -84,9 +84,10 @@ const SessionManager = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <h1 className="text-3xl font-extrabold text-indigo-700">
-                Manage Sessions for: **{course?.name || courseCode}**
+                Manage Sessions for "{course?.name || courseCode}"
             </h1>
             <p className="text-gray-600">Course ID: {courseCode}</p>
+            {/* <p className="text-gray-600">Section: {courseSection}</p> */}
 
             {message && (
                 <div className={`p-3 rounded-lg text-sm font-medium ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
