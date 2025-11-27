@@ -37,19 +37,6 @@ const Navbar = () => {
                 </Link>
                 
                 <nav className="flex items-center space-x-4">
-                    {/* Faculty Toggle Control */}
-                    {role === 'Faculty' && (
-                         <div className="flex items-center space-x-2 border border-white rounded-md px-3 py-1">
-                            <label className="text-sm">Submissions:</label>
-                            <button
-                                onClick={() => setIsSubmissionOpen(prev => !prev)}
-                                className={`px-2 py-0.5 text-xs font-semibold rounded transition ${isSubmissionOpen ? 'bg-green-300 text-green-900 hover:bg-green-400' : 'bg-red-300 text-red-900 hover:bg-red-400'}`}
-                            >
-                                {isSubmissionOpen ? 'OPEN' : 'CLOSED'}
-                            </button>
-                        </div>
-                    )}
-
                     <Link to={dashboardPath} className="hover:text-indigo-200 transition">
                         Dashboard
                     </Link>

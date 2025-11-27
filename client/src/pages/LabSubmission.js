@@ -12,7 +12,10 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState(null);
     const hasSubmitted = !!lab.submissionDetails;
-    const isFormDisabled = hasSubmitted || isSubmitting || !isSubmissionOpen; 
+    
+    // Check if current time exceeds endTime
+    const isSessionExpired = lab.endTime && moment().isAfter(moment(lab.endTime));
+    const isFormDisabled = hasSubmitted || isSubmitting || !isSubmissionOpen || isSessionExpired; 
 
     useEffect(() => {
         setCode(lab.submissionDetails?.submittedCode || '');
@@ -70,6 +73,12 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
             {!isSubmissionOpen && (
                 <div className="p-4 bg-red-100 text-red-700 rounded-lg font-semibold">
                     Submissions are currently closed by the instructor.
+                </div>
+            )}
+
+            {isSessionExpired && (
+                <div className="p-4 bg-red-100 text-red-700 rounded-lg font-semibold">
+                    This lab session has ended. No more submissions are accepted.
                 </div>
             )}
             

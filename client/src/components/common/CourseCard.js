@@ -6,7 +6,15 @@ import moment from 'moment';
 const CourseCard = ({ course, role, onActionClick, actionLabel }) => {
   const { name, code, section, students, createdAt, faculty } = course; 
   
-  const instructorName = faculty ? faculty.fullName : 'N/A';
+  let instructorName = 'N/A';
+  if (faculty) {
+    if (faculty.fullName) {
+      instructorName = faculty.fullName;
+    } else if (faculty.firstName) {
+      instructorName = `${faculty.firstName} ${faculty.lastName || ''}`.trim();
+    }
+  }
+  
   const studentsCount = students ? students.length : course.studentsCount || 0;
 
   const buttonStyle = role === 'Faculty' 
