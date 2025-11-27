@@ -9,7 +9,6 @@ import LoginPage from './pages/LoginPage';
 // Page Imports
 import StudentDashboard from './pages/dashboards/StudentDashboard';
 import FacultyDashboard from './pages/dashboards/FacultyDashboard';
-import AdminDashboard from './pages/dashboards/AdminDashboard'; 
 import SessionManager from './pages/SessionManager';
 import SessionReview from './pages/SessionReview';
 import LabSubmission from './pages/LabSubmission';
@@ -37,10 +36,6 @@ function App() {
                         <Route path="/faculty/dashboard" element={<ProtectedRoute role="Faculty"><FacultyDashboard /></ProtectedRoute>} />
                         <Route path="/faculty/course/:courseCode/sessions" element={<ProtectedRoute role="Faculty"><SessionManager /></ProtectedRoute>} />
                         <Route path="/faculty/session/:sessionId/review" element={<ProtectedRoute role="Faculty"><SessionReview /></ProtectedRoute>} />
-                        
-                        {/* ADMIN ROUTES */}
-                        <Route path="/admin/dashboard" element={<ProtectedRoute role="Admin"><AdminDashboard /></ProtectedRoute>} />
-                        <Route path="/admin/courses" element={<ProtectedRoute role="Admin"><CourseManagement /></ProtectedRoute>} />
                         
                         {/* Error Route */}
                          <Route path="/error/:code" element={<ErrorPage />} />

@@ -55,7 +55,7 @@ const Navbar = () => {
                     </Link>
                     
                     <div className="text-sm border-l pl-4 flex items-center space-x-2">
-                        <span>**{fullName}** ({role})</span>
+                        <span>{fullName} ({role})</span>
                         <button 
                             onClick={handleLogout} 
                             className="text-red-300 hover:text-red-100 transition font-semibold"

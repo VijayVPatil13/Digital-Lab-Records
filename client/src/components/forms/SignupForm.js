@@ -22,11 +22,11 @@ const SignupForm = ({ onError, onSignupSuccess }) => {
     setIsSubmitting(true);
 
     // Admin registration is typically done internally, so restrict to Faculty/Student
-    if (form.role === 'Admin') {
-        onError("Admin accounts cannot be created via public registration.");
-        setIsSubmitting(false);
-        return;
-    }
+    // if (form.role === 'Admin') {
+    //     onError("Admin accounts cannot be created via public registration.");
+    //     setIsSubmitting(false);
+    //     return;
+    // }
 
     try {
       // Send data to the new registration endpoint

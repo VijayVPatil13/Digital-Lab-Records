@@ -6,7 +6,6 @@ import RegisterForm from '../components/forms/RegisterForm';
 const rolePresets = {
     faculty: { email: 'faculty@example.com', password: 'password123' },
     student: { email: 'student1@example.com', password: 'password123' },
-    admin: { email: 'admin@example.com', password: 'password123' }
 };
 
 const LoginPage = () => {

@@ -90,7 +90,7 @@ const StudentDashboard = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
       <h1 className="text-3xl font-extrabold text-green-700 mb-6 border-b pb-3 flex items-center">
-        Student Dashboard 🎓
+        Student Dashboard 
       </h1>
 
       <p className="text-lg text-gray-700">

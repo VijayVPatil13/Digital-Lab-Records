@@ -39,7 +39,7 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
                 submittedCode: code
             };
             
-            // ✅ FIX 3: Use the correct student submission endpoint
+            //Use the correct student submission endpoint
             await api.post('/student/submissions', payload); 
             
             setMessage({ type: 'success', text: 'Lab submitted successfully!' });
