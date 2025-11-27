@@ -13,13 +13,13 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
     const facultyId = req.user.id; 
 
     const courses = await Course.find({ faculty: facultyId })
-        .populate('faculty', 'fullName')
+        .populate('faculty', 'firstName lastName')
         .populate('students', 'fullName email');
     
     const formattedCourses = courses.map(course => {
         const courseObj = course.toObject();
         const faculty = courseObj.faculty;
-        const instructorName = faculty && faculty.fullName ? faculty.fullName : req.user.fullName;
+        const instructorName = faculty && faculty.firstName ? `${faculty.firstName} ${faculty.lastName || ''}`.trim() : req.user.fullName;
         
         return {
             ...courseObj,
@@ -60,7 +60,7 @@ exports.createCourse = asyncHandler(async (req, res) => {
     
     // Populate faculty data before returning
     const populatedCourse = await Course.findById(newCourse._id)
-        .populate('faculty', 'fullName')
+        .populate('faculty', 'firstName lastName')
         .populate('students', 'fullName email');
     
     res.status(201).json({
@@ -73,7 +73,7 @@ exports.createCourse = asyncHandler(async (req, res) => {
 // @route   POST /api/faculty/sessions
 // @access  Private (Faculty)
 exports.createLabSession = asyncHandler(async (req, res) => {
-    const { courseCode, title, date, description, maxMarks } = req.body;
+    const { courseCode, title, date, startTime, endTime, description, maxMarks } = req.body;
     const facultyId = req.user.id;
 
     const course = await Course.findOne({ code: courseCode.toUpperCase(), faculty: facultyId });
@@ -89,6 +89,8 @@ exports.createLabSession = asyncHandler(async (req, res) => {
         course: course._id,
         title,
         date,
+        startTime,
+        endTime,
         description,
         maxMarks,
         attendance: initialAttendance,

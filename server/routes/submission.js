@@ -15,6 +15,17 @@ router.post('/', protect, restrictTo('Student'), async (req, res) => {
     const { sessionId, studentId, submittedCode } = req.body;
     
     try {
+        // Check if session exists and if current time is before endTime
+        const session = await LabSession.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({ message: 'Lab session not found.' });
+        }
+
+        const currentTime = new Date();
+        if (currentTime > session.endTime) {
+            return res.status(403).json({ message: 'This lab session has ended. Submissions are no longer accepted.' });
+        }
+
         const existingSubmission = await Submission.findOne({ 
             session: sessionId, 
             student: studentId 
