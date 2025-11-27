@@ -110,11 +110,11 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Join Course Section */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-600">
+      <div className="flex flex-col items-center gap-8">
+
+        {/* Join Course Section (centered) */}
+        <div className="w-full max-w-md space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-600 mx-auto">
             <h2 className="text-xl font-bold mb-4 text-green-700 flex items-center">
               <span className="mr-2">🔗</span> Join New Course
             </h2>
@@ -142,28 +142,31 @@ const StudentDashboard = () => {
         </div>
 
         {/* Enrolled Courses */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="w-full space-y-6">
           <h2 className="text-2xl font-bold text-gray-800">
             Enrolled Courses
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
             {loading ? (
               <LoadingSpinner />
             ) : courses.length === 0 ? (
-              <p className="col-span-2 text-gray-500 italic">
+              <p className="text-gray-500 italic">
                 You are not enrolled in any approved courses yet.
               </p>
             ) : (
-              courses.map((course) => (
-                <CourseCard
-                  key={course.code || course._id}
-                  course={course}
-                  role="Student"
-                  onActionClick={handleAccessLabs}
-                  actionLabel="Access Labs"
-                />
-              ))
+              <div className="flex flex-wrap items-start -mx-3">
+                {courses.map((course) => (
+                  <div key={course.code || course._id} className="px-3 w-full sm:w-1/2 lg:w-1/3 mb-6">
+                    <CourseCard
+                      course={course}
+                      role="Student"
+                      onActionClick={handleAccessLabs}
+                      actionLabel="Access Labs"
+                    />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

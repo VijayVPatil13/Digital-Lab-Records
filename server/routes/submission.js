@@ -12,7 +12,9 @@ const LabSession = require('../models/LabSession.js');
 // router.post('/', protect, restrictTo('Student'), async (req, res) => { // Original line 11
 router.post('/', protect, restrictTo('Student'), async (req, res) => {
 
-    const { sessionId, studentId, submittedCode } = req.body;
+    const { sessionId, submittedCode } = req.body;
+    // Use authenticated user id to avoid spoofing
+    const studentId = req.user?.id || req.user?._id;
     
     try {
         // Check if session exists and if current time is before endTime
@@ -35,8 +37,10 @@ router.post('/', protect, restrictTo('Student'), async (req, res) => {
             return res.status(400).json({ message: 'You have already submitted for this session.' });
         }
         
+        // session.course is required by Submission model
         await Submission.create({
             session: sessionId,
+            course: session.course,
             student: studentId,
             submittedCode,
         });
@@ -45,6 +49,23 @@ router.post('/', protect, restrictTo('Student'), async (req, res) => {
     } catch (error) {
         console.error('Submission error:', error);
         res.status(500).json({ message: 'Server error during submission.' });
+    }
+});
+
+// GET submission by id (for faculty review detail page) - MUST be before /:sessionId/:studentId
+router.get('/id/:submissionId', protect, restrictTo('Faculty'), async (req, res) => {
+    try {
+        const submission = await Submission.findById(req.params.submissionId)
+            .populate('student', 'firstName lastName email')
+            .populate({ path: 'session', select: 'title date startTime endTime description maxMarks course', populate: { path: 'course', select: 'name code' } })
+            .populate('course', 'name code');
+
+        if (!submission) return res.status(404).json({ message: 'Submission not found.' });
+
+        res.json({ submission });
+    } catch (error) {
+        console.error('Error fetching submission by id:', error);
+        res.status(500).json({ message: 'Error fetching submission.' });
     }
 });
 

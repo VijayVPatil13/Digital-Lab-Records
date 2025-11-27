@@ -30,7 +30,7 @@ const CourseCard = ({ course, role, onActionClick, actionLabel }) => {
         
         <div className="flex justify-between text-sm text-gray-600">
             <span className="font-mono bg-gray-100 px-2 py-1 rounded">{code}</span>
-            <span className="font-medium text-gray-700">Sec: {section || 'A'}</span>
+            <span className="font-medium text-gray-700">Sec: {(section && String(section).trim()) ? section : '-'}</span>
         </div>
 
         <div className="text-sm text-gray-700 space-y-1 pt-2 border-t mt-3">

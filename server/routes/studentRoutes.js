@@ -77,7 +77,7 @@ router.get('/courses/enrolled', async (req, res) => {
             status: 'approved' 
         }).populate({
             path: 'course', // Populate the Course document
-            select: 'name code description faculty students', 
+            select: 'name code description section faculty students', 
             populate: {
                 path: 'faculty', // Populate faculty User details
                 select: 'firstName lastName'

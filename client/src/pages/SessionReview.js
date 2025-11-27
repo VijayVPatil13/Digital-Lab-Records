@@ -1,11 +1,11 @@
 // client/src/pages/SessionReview.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import moment from 'moment';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const ReviewTable = ({ studentData, session, onGrade }) => {
+const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
     // Local state to manage grade changes before saving to server
     const [grades, setGrades] = useState({});
     const [message, setMessage] = useState(null);
@@ -77,7 +77,6 @@ const ReviewTable = ({ studentData, session, onGrade }) => {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs truncate">Submitted Content</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks (Max: {session.maxMarks})</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feedback</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -98,13 +97,6 @@ const ReviewTable = ({ studentData, session, onGrade }) => {
                                             {item.hasSubmitted ? 'Submitted' : 'Pending'}
                                         </span>
                                     </td>
-                                    {/* Tabulated Submitted Content */}
-                                    <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
-                                        <pre className="whitespace-pre-wrap max-h-16 overflow-y-auto bg-gray-50 p-2 rounded-sm">
-                                            {item.submission.submittedCode ? item.submission.submittedCode.substring(0, 200) + (item.submission.submittedCode.length > 200 ? '...' : '') : 'No code submitted'}
-                                        </pre>
-                                    </td>
-                                    {/* Marks */}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <input
                                             type="number"
@@ -129,13 +121,23 @@ const ReviewTable = ({ studentData, session, onGrade }) => {
                                     </td>
                                     {/* Action */}
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button
-                                            onClick={() => handleGradeSubmission(studentId)}
-                                            disabled={!item.hasSubmitted || gradeInfo.isSubmitting}
-                                            className="px-3 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 disabled:opacity-50"
-                                        >
-                                            {gradeInfo.isSubmitting ? 'Saving...' : 'Save Grade'}
-                                        </button>
+                                        <div className="flex items-center justify-end space-x-2">
+                                            <button
+                                                onClick={() => handleGradeSubmission(studentId)}
+                                                disabled={!item.hasSubmitted || gradeInfo.isSubmitting}
+                                                className="px-3 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 disabled:opacity-50"
+                                            >
+                                                {gradeInfo.isSubmitting ? 'Saving...' : 'Save Grade'}
+                                            </button>
+
+                                            <button
+                                                onClick={() => item.submission && item.submission._id && navigate(`/faculty/submission/${item.submission._id}`)}
+                                                disabled={!item.hasSubmitted}
+                                                className="px-3 py-1 bg-gray-200 text-gray-800 rounded text-xs hover:bg-gray-300 disabled:opacity-50"
+                                            >
+                                                Open
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -148,6 +150,7 @@ const ReviewTable = ({ studentData, session, onGrade }) => {
 };
 
 const SessionReview = () => {
+    const navigate = useNavigate();
     const { sessionId } = useParams();
     const [session, setSession] = useState(null);
     const [reviewList, setReviewList] = useState([]);
@@ -197,7 +200,7 @@ const SessionReview = () => {
             <p className="text-gray-600">Course: {session.course.name} ({session.course.code}) | Date: {moment(session.date).format('MMM D, YYYY h:mm A')}</p>
             <p className="text-sm border-l-4 border-indigo-500 pl-3 italic">{session.description}</p>
             
-            <ReviewTable studentData={reviewList} session={session} onGrade={updateReviewListOnGrade} />
+            <ReviewTable studentData={reviewList} session={session} onGrade={updateReviewListOnGrade} navigate={navigate} />
         </div>
     );
 };

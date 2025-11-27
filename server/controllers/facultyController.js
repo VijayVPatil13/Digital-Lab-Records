@@ -182,8 +182,10 @@ exports.getReviewData = asyncHandler(async (req, res) => {
         throw new Error('Not authorized to view this session review.');
     }
 
-    const enrolledStudents = await User.find({ enrolledCourses: session.course._id, role: 'Student' }, 'fullName email').lean();
-    
+    // Get enrolled students from Enrollment model to ensure correct and up-to-date list
+    const Enrollment = require('../models/Enrollment');
+    const enrolledRecords = await Enrollment.find({ course: session.course._id, status: 'approved' }).populate('student', 'firstName lastName email').lean();
+
     const SubmissionModel = require('../models/Submission');
     const submissions = await SubmissionModel.find({ session: sessionId }).lean();
 
@@ -192,13 +194,19 @@ exports.getReviewData = asyncHandler(async (req, res) => {
         return map;
     }, {});
 
-    const reviewList = enrolledStudents.map(student => {
+    const reviewList = enrolledRecords.map(record => {
+        const student = record.student;
+        // Ensure fullName exists for backward compatibility
+        if (!student.fullName) {
+            student.fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim();
+        }
+
         const submission = submissionMap[student._id.toString()];
         return {
             student: student,
-            submission: submission || { submittedCode: 'N/A', marks: null, feedback: '' },
+            submission: submission || { _id: null, submittedCode: '', marks: null, feedback: '' },
             hasSubmitted: !!submission,
-            attended: session.attendance.some(id => id.toString() === student._id.toString()),
+            attended: Array.isArray(session.attendance) ? session.attendance.some(id => id.toString() === student._id.toString()) : false,
         };
     });
 

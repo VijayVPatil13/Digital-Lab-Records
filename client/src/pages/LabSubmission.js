@@ -11,11 +11,12 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
     const [code, setCode] = useState(lab.submissionDetails?.submittedCode || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState(null);
-    const hasSubmitted = !!lab.submissionDetails;
+    // submissionDetails is always present in the API response; check submissionId to know if an actual submission exists
+    const hasSubmitted = !!lab.submissionDetails?.submissionId;
     
     // Check if current time exceeds endTime
     const isSessionExpired = lab.endTime && moment().isAfter(moment(lab.endTime));
-    const isFormDisabled = hasSubmitted || isSubmitting || !isSubmissionOpen || isSessionExpired; 
+    const isFormDisabled = hasSubmitted || isSubmitting || isSessionExpired; 
 
     useEffect(() => {
         setCode(lab.submissionDetails?.submittedCode || '');
@@ -108,26 +109,30 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
 
 const LabSessionCard = ({ lab, isSelected, onClick }) => {
     const cardClass = isSelected ? 'bg-green-100 ring-4 ring-green-500' : 'bg-white hover:bg-gray-50';
-    const statusColor = lab.submissionStatus === 'Submitted' ? 'text-green-600' : 'text-red-600';
-    const statusText = lab.submissionDetails?.marks !== undefined && lab.submissionDetails.marks !== null 
-        ? `Graded: ${lab.submissionDetails.marks}/${lab.maxMarks}` 
-        : lab.submissionStatus;
-    
+    const hasGrade = lab.submissionDetails && lab.submissionDetails.marks !== undefined && lab.submissionDetails.marks !== null;
+    const statusColor = hasGrade || lab.submissionStatus === 'Submitted' ? 'text-green-600' : 'text-red-600';
+    const statusText = hasGrade ? `Graded: ${lab.submissionDetails.marks}/${lab.maxMarks}` : (lab.submissionStatus || 'Pending');
+
+    const start = lab.startTime ? moment(lab.startTime).format('MMM D, YYYY h:mm A') : '—';
+    const end = lab.endTime ? moment(lab.endTime).format('MMM D, YYYY h:mm A') : '—';
+
     return (
         <div 
             onClick={() => onClick(lab)}
             className={`p-4 border rounded-lg cursor-pointer transition ${cardClass}`}
         >
             <p className="font-bold">{lab.title}</p>
-            <p className="text-sm text-gray-600">Due: {moment(lab.date).format('MMM D, YYYY')}</p>
+            <p className="text-sm text-gray-600">Start: {start}</p>
+            <p className="text-sm text-gray-600">End: {end}</p>
             <p className={`text-xs font-semibold ${statusColor}`}>{statusText}</p>
+            <p className="text-xs text-gray-500">Max Marks: {lab.maxMarks ?? 'N/A'}</p>
         </div>
     );
 };
 
 
 const LabSubmission = () => {
-    const { courseId } = useParams();
+    const { courseCode } = useParams();
     const [course, setCourse] = useState(null);
     const [labs, setLabs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -138,7 +143,7 @@ const LabSubmission = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await api.get(`/student/labs/${courseId}`);
+            const response = await api.get(`/student/labs/${courseCode}`);
             const { course, labs } = response.data;
             
             setCourse(course);
@@ -152,7 +157,7 @@ const LabSubmission = () => {
         } finally {
             setLoading(false);
         }
-    }, [courseId, selectedLab?._id]);
+    }, [courseCode, selectedLab?._id]);
 
     useEffect(() => {
         fetchLabsAndSubmissions();
@@ -164,7 +169,7 @@ const LabSubmission = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
             <h1 className="text-3xl font-extrabold text-green-700 border-b pb-3">
-                Lab Submissions for: **{course?.name}** ({courseId})
+                Lab Submissions for: **{course?.name}** ({courseCode})
             </h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
