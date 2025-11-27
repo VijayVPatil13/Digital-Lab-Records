@@ -52,9 +52,14 @@ exports.createCourse = asyncHandler(async (req, res) => {
         faculty: facultyId, // Assigns the course to the logged-in faculty
     });
     
+    // Populate faculty data before returning
+    const populatedCourse = await Course.findById(newCourse._id)
+        .populate('faculty', 'fullName')
+        .populate('students', 'fullName email');
+    
     res.status(201).json({
-        message: `Course ${newCourse.name} created and assigned to you.`,
-        course: newCourse,
+        message: `Course ${populatedCourse.name} created and assigned to you.`,
+        course: populatedCourse,
     });
 });
 
