@@ -195,7 +195,7 @@ const SessionReview = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-6">
             <h1 className="text-3xl font-extrabold text-indigo-700">
-                Review Session: **{session.title}**
+                Review Session: {session.title}
             </h1>
             <p className="text-gray-600">Course: {session.course.name} ({session.course.code}) | Date: {moment(session.date).format('MMM D, YYYY h:mm A')}</p>
             <p className="text-sm border-l-4 border-indigo-500 pl-3 italic">{session.description}</p>

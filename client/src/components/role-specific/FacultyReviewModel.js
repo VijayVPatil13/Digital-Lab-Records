@@ -9,7 +9,7 @@ const FacultyReviewModel = ({ submission, onClose }) => {
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg">
         <h3 className="text-2xl font-bold mb-4">Review Submission #{submission.id}</h3>
-        <p className="mb-4">Student Work: **{submission.text.substring(0, 50)}...**</p>
+        <p className="mb-4">Student Work: {submission.text.substring(0, 50)}...</p>
         <input className="border p-2 w-full mb-3" placeholder="Grade (e.g., A+, 95%)" />
         <textarea className="border p-2 w-full h-24 mb-4" placeholder="Feedback for student"></textarea>
         <div className="flex justify-end space-x-3">

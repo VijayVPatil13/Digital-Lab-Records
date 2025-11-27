@@ -169,7 +169,7 @@ const LabSubmission = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-6">
             <h1 className="text-3xl font-extrabold text-green-700 border-b pb-3">
-                Lab Submissions for: **{course?.name}** ({courseCode})
+                Lab Submissions for: {course?.name} ({courseCode})
             </h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
