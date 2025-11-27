@@ -13,6 +13,7 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
     const facultyId = req.user.id; 
 
     const courses = await Course.find({ faculty: facultyId })
+        .populate('faculty', 'fullName')
         .populate('students', 'fullName email')
         .lean(); 
     
@@ -29,7 +30,7 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
 // @route   POST /api/faculty/courses
 // @access  Private (Faculty)
 exports.createCourse = asyncHandler(async (req, res) => {
-    const { name, code, description } = req.body; 
+    const { name, code, section, description } = req.body; 
     const facultyId = req.user.id; // Use ID from JWT/auth
 
     if (!name || !code) {
@@ -46,6 +47,7 @@ exports.createCourse = asyncHandler(async (req, res) => {
     const newCourse = await Course.create({
         name,
         code: code.toUpperCase(),
+        section: section || 'A',
         description,
         faculty: facultyId, // Assigns the course to the logged-in faculty
     });
