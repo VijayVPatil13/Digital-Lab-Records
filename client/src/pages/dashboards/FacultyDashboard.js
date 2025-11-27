@@ -52,6 +52,7 @@ const FacultyDashboard = () => {
       const response = await api.post('/faculty/courses', {
         name: courseData.name,
         code: courseData.code,
+        section: courseData.section,
         description: courseData.description,
       });
 
