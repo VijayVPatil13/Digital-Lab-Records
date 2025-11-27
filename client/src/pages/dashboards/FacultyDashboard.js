@@ -76,7 +76,7 @@ const FacultyDashboard = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
       <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 border-b pb-3 flex items-center">
-        Faculty Dashboard 👨‍🏫
+        Faculty Dashboard 
       </h1>
 
       <p className="text-lg text-gray-700">
