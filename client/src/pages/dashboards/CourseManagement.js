@@ -5,7 +5,6 @@ import api from "../../utils/api";
 import CourseCard from "../../components/common/CourseCard";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import TabbedContainer from "../../components/common/TabbedContainer";
-import AdminEnrollmentForm from "../../components/role-specific/AdminEnrollmentForm";
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
