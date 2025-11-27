@@ -8,7 +8,6 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
 const studentRoutes = require('./routes/studentRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 const courseRoutes = require('./routes/course'); 
 const submissionRoutes = require('./routes/submission'); 
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -30,7 +29,6 @@ mongoose.connect(MONGO_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/submissions', submissionRoutes);
 

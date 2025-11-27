@@ -40,14 +40,9 @@ const seedDB = async () => {
             fullName: 'Neha Reddy',
             role: 'Student'
         });
-        const adminUser = new User({
-            email: 'admin@example.com',
-            password: 'password123',
-            fullName: 'Chief Admin',
-            role: 'Admin'
-        });
+        
 
-        await Promise.all([facultyUser.save(), student1.save(), student2.save(), adminUser.save()]);
+        await Promise.all([facultyUser.save(), student1.save(), student2.save()]);
         console.log('Users created.');
 
         // Course 1: Fully Enrolled by Enrollment/Course student lists
