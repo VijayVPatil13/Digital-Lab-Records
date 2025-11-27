@@ -5,6 +5,7 @@ const CourseForm = ({ onSubmit, onCancel, initialData = {} }) => {
     const [formData, setFormData] = useState({
         name: initialData.name || '',
         code: initialData.code || '',
+        section: initialData.section || '',
         description: initialData.description || '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
