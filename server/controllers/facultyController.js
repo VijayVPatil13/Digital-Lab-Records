@@ -14,14 +14,20 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
 
     const courses = await Course.find({ faculty: facultyId })
         .populate('faculty', 'fullName')
-        .populate('students', 'fullName email')
-        .lean(); 
+        .populate('students', 'fullName email');
     
-    const formattedCourses = courses.map(course => ({
-        ...course,
-        instructorName: req.user.fullName,
-        studentsCount: course.students ? course.students.length : 0
-    }));
+    const formattedCourses = courses.map(course => {
+        const courseObj = course.toObject();
+        const faculty = courseObj.faculty;
+        const instructorName = faculty && faculty.fullName ? faculty.fullName : req.user.fullName;
+        
+        return {
+            ...courseObj,
+            faculty: faculty,
+            instructorName: instructorName,
+            studentsCount: courseObj.students ? courseObj.students.length : 0
+        };
+    });
 
     res.json({ courses: formattedCourses });
 });
