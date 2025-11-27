@@ -7,7 +7,6 @@ const {
     getMyCourses, 
     createCourse, 
     createLabSession, 
-    // FIX: Ensure getSessionsByCourse is included in the destructuring import
     getSessionsByCourse, 
     getPendingEnrollments,
     updateEnrollmentStatus,

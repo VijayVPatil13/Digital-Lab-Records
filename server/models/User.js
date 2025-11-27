@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ['Faculty', 'Student'], required: true },
   firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
+  lastName: { type: String },
   enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }]
 }, { toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
