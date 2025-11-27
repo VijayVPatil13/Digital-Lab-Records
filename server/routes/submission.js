@@ -1,0 +1,85 @@
+// server/routes/submission.js
+const express = require('express');
+const router = express.Router();
+// --- CRITICAL FIX: Use simple require if 'protect' is the default export ---
+const protect = require('../middleware/auth.js'); 
+const { restrictTo } = require('../middleware/roles.js'); // Assuming named export here
+const Submission = require('../models/Submission.js');
+const LabSession = require('../models/LabSession.js');
+
+// --- Student Actions ---
+
+// router.post('/', protect, restrictTo('Student'), async (req, res) => { // Original line 11
+router.post('/', protect, restrictTo('Student'), async (req, res) => {
+
+    const { sessionId, studentId, submittedCode } = req.body;
+    
+    try {
+        const existingSubmission = await Submission.findOne({ 
+            session: sessionId, 
+            student: studentId 
+        });
+
+        if (existingSubmission) {
+            return res.status(400).json({ message: 'You have already submitted for this session.' });
+        }
+        
+        await Submission.create({
+            session: sessionId,
+            student: studentId,
+            submittedCode,
+        });
+
+        res.status(201).json({ message: 'Submission successful!' });
+    } catch (error) {
+        console.error('Submission error:', error);
+        res.status(500).json({ message: 'Server error during submission.' });
+    }
+});
+
+router.get('/:sessionId/:studentId', protect, async (req, res) => {
+    try {
+        const submission = await Submission.findOne({
+            session: req.params.sessionId,
+            student: req.params.studentId
+        });
+        
+        if (!submission) {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+        
+        res.json({ submission });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching submission details.' });
+    }
+});
+
+// --- Faculty Actions ---
+
+router.put('/grade/:submissionId', protect, restrictTo('Faculty'), async (req, res) => {
+    const { marks, feedback } = req.body;
+    
+    try {
+        const submission = await Submission.findById(req.params.submissionId);
+        if (!submission) {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+        
+        // Validation
+        const session = await LabSession.findById(submission.session);
+        if (marks > session.maxMarks || marks < 0) {
+            return res.status(400).json({ message: `Marks must be between 0 and ${session.maxMarks}.` });
+        }
+        
+        submission.marks = marks;
+        submission.feedback = feedback;
+        
+        await submission.save();
+
+        res.json({ message: 'Submission graded successfully.', submission });
+    } catch (error) {
+        res.status(500).json({ message: 'Error grading submission.' });
+    }
+});
+
+module.exports = router;

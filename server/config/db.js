@@ -1,4 +1,4 @@
-// server/config/db.js
+// server/config/db.js (Not used in server.js but provided for completeness)
 const mongoose = require('mongoose');
 
 const connectDB = async () => {

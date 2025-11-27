@@ -1,3 +1,4 @@
+// client/config-overrides.js
 module.exports = function override(config) {
   // disable html-webpack-plugin script evaluation
   config.plugins.forEach(plugin => {

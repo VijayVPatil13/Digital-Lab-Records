@@ -1,19 +1,13 @@
 // client/src/index.js
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import ReactDOM from 'react-dom/client'; 
+import './index.css'; 
 import App from './App';
-import { AuthProvider } from './contexts/AuthContext';
-import './styles/tailwind.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
 root.render(
   <React.StrictMode>
-    {/* BrowserRouter must wrap AuthProvider */}
-    <BrowserRouter> 
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
 );

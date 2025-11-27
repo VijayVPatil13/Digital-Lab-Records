@@ -1,42 +1,48 @@
 // server/server.js
 const express = require('express');
-const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const connectDB = require('./config/db');
-const { notFound, errorHandler } = require('./middleware/errorMiddleware'); 
+require('dotenv').config();
 
-dotenv.config();
-connectDB();
+// Route Imports
+const authRoutes = require('./routes/authRoutes');
+const facultyRoutes = require('./routes/facultyRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const courseRoutes = require('./routes/course'); 
+const submissionRoutes = require('./routes/submission'); 
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:3000' }));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// --- Import Route Handlers ---
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const facultyRoutes = require('./routes/facultyRoutes');
-const studentRoutes = require('./routes/studentRoutes');
+// Database Connection
+const MONGO_URI = process.env.MONGODB_URI;
 
-// ---------------------------------
-// ROUTES
-// ---------------------------------
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/submissions', submissionRoutes);
 
-app.get('/', (req, res) => {
-    res.send('Digital Lab Records API is running...');
+// Test route
+app.get('/api', (req, res) => {
+  res.send('Digital Lab Records API Running');
 });
 
-// ---------------------------------
-// ERROR MIDDLEWARE
-// ---------------------------------
+// Error Handling Middleware (MUST be last)
 app.use(notFound);
 app.use(errorHandler);
 
+// Port and Server Start
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

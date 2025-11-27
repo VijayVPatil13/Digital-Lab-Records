@@ -1,79 +1,94 @@
 // client/src/pages/LoginPage.js
 import React, { useState } from 'react';
-import LoginForm from '../components/forms/LoginForm';
-import SignupForm from '../components/forms/SignupForm'; 
+import LoginForm from '../components/forms/LoginForm'; 
+import RegisterForm from '../components/forms/RegisterForm'; 
+
+const rolePresets = {
+    faculty: { email: 'faculty@example.com', password: 'password123' },
+    student: { email: 'student1@example.com', password: 'password123' },
+    admin: { email: 'admin@example.com', password: 'password123' }
+};
 
 const LoginPage = () => {
-  const [error, setError] = useState(null);
-  const [currentRole, setCurrentRole] = useState('Student'); 
-  const [isLoginView, setIsLoginView] = useState(true); 
+    const [mode, setMode] = useState('login'); 
+    const [selectedRole, setSelectedRole] = useState('student'); 
+    const [authError, setAuthError] = useState(null);
 
-  const rolePresets = {
-    'Student': 'student@lab.edu',
-    'Faculty': 'faculty@lab.edu',
-    'Admin': 'admin@lab.edu',
-  };
+    const preset = rolePresets[selectedRole];
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-8 bg-white shadow-xl rounded-lg w-full max-w-md">
-        <h2 className="text-3xl font-extrabold mb-6 text-center text-gray-800">
-          Digital Lab System
-        </h2>
+    const isLogin = mode === 'login';
 
-        {/* --- View Toggle Button (Login <-> Sign Up) --- */}
-        <div className="flex justify-center mb-4">
-          <button 
-            onClick={() => {
-              setIsLoginView(!isLoginView);
-              setError(null);
-            }}
-            className="text-sm text-blue-600 hover:text-blue-800 transition"
-          >
-            {isLoginView ? 'Need an account? Sign Up' : 'Already have an account? Log In'}
-          </button>
-        </div>
-        
-        {error && <p className="text-red-500 mb-4 text-center border p-2 bg-red-50 rounded text-sm">{error}</p>}
-        
-        {isLoginView ? (
-          <>
-            {/* --- Role Selection Buttons for Login --- */}
-            <div className="mb-6 flex justify-around p-2 bg-gray-100 rounded-lg">
-              {Object.keys(rolePresets).map((role) => (
-                <button
-                  key={role}
-                  onClick={() => {
-                    setCurrentRole(role);
-                    setError(null);
-                  }}
-                  className={`py-2 px-4 rounded-lg font-semibold transition ${
-                    currentRole === role
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 hover:bg-blue-50'
-                  }`}
-                >
-                  Login as {role}
-                </button>
-              ))}
+    const handleSuccessfulRegistration = () => {
+        // Registration now logs in and redirects automatically (see RegisterForm.js)
+        // This is kept for cleanup consistency, though it may not be called directly.
+        setAuthError({ type: 'success', text: "Registration successful! You are now logged in." });
+    };
+
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-200 p-4">
+            <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
+                <h1 className="text-3xl font-extrabold text-gray-900 text-center border-b pb-4">
+                    Digital Lab Records
+                </h1>
+
+                {/* Mode Selector (Tabs) */}
+                <div className="flex justify-around space-x-2 bg-gray-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => { setMode('login'); setAuthError(null); }}
+                        className={`w-1/2 p-2 rounded-lg font-semibold transition ${isLogin ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-700 hover:bg-white'}`}
+                    >
+                        Login
+                    </button>
+                    <button
+                        onClick={() => { setMode('register'); setAuthError(null); }}
+                        className={`w-1/2 p-2 rounded-lg font-semibold transition ${!isLogin ? 'bg-green-600 text-white shadow-md' : 'text-gray-700 hover:bg-white'}`}
+                    >
+                        Register
+                    </button>
+                </div>
+                
+                {/* Role Selector (Only for Login Presets) */}
+                {isLogin && (
+                    <div className="flex justify-around space-x-2">
+                        {Object.keys(rolePresets).map((roleKey) => (
+                            <button
+                                key={roleKey}
+                                onClick={() => {
+                                    setSelectedRole(roleKey);
+                                    setAuthError(null);
+                                }}
+                                className={`w-1/3 p-2 rounded-lg font-medium text-sm transition ${selectedRole === roleKey ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            >
+                                {roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+
+                {/* Error/Success Display */}
+                {authError && (
+                    <div className={`p-3 rounded-lg text-sm font-medium ${authError.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {authError.text || 'An unknown error occurred.'} 
+                    </div>
+                )}
+
+                {/* Form Component */}
+                {isLogin ? (
+                    <LoginForm
+                        onError={setAuthError}
+                        initialEmail={preset.email}
+                        initialPassword={preset.password}
+                    />
+                ) : (
+                    <RegisterForm
+                        onError={setAuthError}
+                        onSignupSuccess={handleSuccessfulRegistration}
+                    />
+                )}
             </div>
-            {/* --- End Role Selection Buttons --- */}
-
-            <LoginForm 
-              onError={setError} 
-              initialEmail={rolePresets[currentRole]}
-              initialPassword="securePass123" 
-            />
-          </>
-        ) : (
-          <SignupForm 
-            onError={setError} 
-            onSignupSuccess={() => setIsLoginView(true)} 
-          />
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default LoginPage;

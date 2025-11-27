@@ -1,20 +1,20 @@
 // client/src/components/common/Layout.js
-
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import Navbar from './Navbar'; 
 
 const Layout = () => {
     return (
         <div className="min-h-screen bg-gray-100">
-            <header className="bg-white shadow p-4 flex justify-between items-center">
-                <Link to="/login" className="text-xl font-bold text-indigo-700">Digital Lab Records</Link>
-                {/* NOTE: Replace this placeholder with your actual AuthContext-based Role/Logout component */}
-                <div className="text-sm">Role: Faculty | <button className="text-red-600">Logout</button></div>
-            </header>
+            <Navbar />
             
-            <main className="p-4">
-                <Outlet /> {/* Renders the current dashboard/page */}
+            <main className="p-4 pt-20">
+                <Outlet />
             </main>
+
+            <footer className="p-4 text-center text-sm text-gray-500 border-t mt-8">
+                Digital Lab Records System © 2025
+            </footer>
         </div>
     );
 };

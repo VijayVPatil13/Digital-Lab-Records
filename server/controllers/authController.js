@@ -1,23 +1,24 @@
 // server/controllers/authController.js
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
 
-const generateToken = (id, role) => {
-  const expiration = process.env.JWT_EXPIRATION_TIME || '1d';
-  
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: expiration, 
-  });
+const jwt = require('jsonwebtoken');
+const User = require('../models/User'); 
+const asyncHandler = require('express-async-handler'); // Assuming this import exists
+
+const generateToken = (id, role, fullName) => {
+    // NOTE: Ensure process.env.JWT_SECRET is set
+    return jwt.sign({ id, role, fullName }, process.env.JWT_SECRET || 'jwt_secret_key', {
+        expiresIn: '30d', 
+    });
 };
 
-exports.registerUser = async (req, res) => {
-    const { firstName, lastName, email, password, role } = req.body;
+exports.registerUser = asyncHandler(async (req, res) => {
+    const { fullName, email, password, role } = req.body; 
 
-    if (!firstName || !lastName || !email || !password || !role) {
+    if (!fullName || !email || !password || !role) {
         return res.status(400).json({ message: 'Please enter all fields.' });
     }
-    if (role === 'Admin') {
+    // Security check: Only allow public registration for specific roles
+    if (!['Faculty', 'Student'].includes(role)) {
         return res.status(403).json({ message: 'Admin accounts cannot be registered publicly.' });
     }
 
@@ -27,42 +28,64 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists with this email.' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(password, salt);
+        // --- FIX: Robustly split fullName to satisfy required schema fields ---
+        const names = fullName.trim().split(/\s+/);
+        const firstName = names[0] || 'User';
+        
+        // CRITICAL FIX: If only one name is provided (names.length <= 1), 
+        // use 'User' as a placeholder for lastName to satisfy the Mongoose required validation.
+        const lastName = names.length > 1 ? names.slice(1).join(' ') : 'User'; 
+        // -------------------------------------------------------------------------------------
 
-        const newUser = await User.create({
-            firstName, lastName, email, passwordHash, role, enrolledCourses: [],
-        });
+        const newUser = await User.create({ 
+            firstName, 
+            lastName, 
+            email, 
+            passwordHash: password, // Mapped to passwordHash for hashing hook
+            role, 
+            enrolledCourses: [], 
+        }); 
 
         res.status(201).json({
-            id: newUser._id, email: newUser.email, role: newUser.role,
+            user: {
+                id: newUser._id,
+                fullName: newUser.fullName, 
+                email: newUser.email,
+                role: newUser.role,
+            },
+            token: generateToken(newUser._id, newUser.role, newUser.fullName),
+            message: `${newUser.role} registered and logged in successfully!`
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error during registration.' });
+        console.error("REGISTRATION FAILED:", error);
+        // Display validation errors clearly if they aren't caught by the split logic
+        const message = error.errors ? 'Validation failed: Check required fields.' : 'Server error during registration. Check logs.';
+        res.status(500).json({ message });
     }
-};
+});
 
-exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
+exports.loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email }).select('+passwordHash'); 
 
-    if (user && (await bcrypt.compare(password, user.passwordHash))) {
-      res.json({
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,   
-        lastName: user.lastName,     
-        token: generateToken(user._id, user.role), 
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid credentials (email or password)' });
+        if (user && (await user.matchPassword(password))) {
+            res.json({
+                user: {
+                    id: user._id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role,
+                },
+                token: generateToken(user._id, user.role, user.fullName), 
+                message: 'Login successful'
+            });
+        } else {
+            res.status(401).json({ message: 'Invalid credentials (email or password)' });
+        }
+    } catch (error) {
+        console.error('SERVER ERROR DURING LOGIN:', error);
+        res.status(500).json({ message: 'Server error during login. Check server logs.' }); 
     }
-  } catch (error) {
-    console.error('SERVER ERROR DURING LOGIN:', error);
-    res.status(500).json({ message: 'Server error during login. Check server logs.' }); 
-  }
-};
+});

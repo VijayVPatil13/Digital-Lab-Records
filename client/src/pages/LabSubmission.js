@@ -1,106 +1,186 @@
-// client/src/pages/LabSubmission.js
-
-import React, { useState, useEffect } from 'react';
+// client/src/pages/LabSubmission.js (Uses isSubmissionOpen)
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // To get studentId
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import moment from 'moment';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const LabSubmission = () => {
-    const { user } = useAuth();
-    // Assuming navigation is to /student/course/:courseId/labs
-    const { courseId } = useParams(); 
-    const [sessions, setSessions] = useState([]); 
-    const [submissionForm, setSubmissionForm] = useState({ sessionId: '', code: '' });
+const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
+    const { userId, isSubmissionOpen } = useAuth(); // Get global state
+    const [code, setCode] = useState(lab.submissionDetails?.submittedCode || '');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const hasSubmitted = !!lab.submissionDetails;
+    const isFormDisabled = hasSubmitted || isSubmitting || !isSubmissionOpen; 
 
-    const fetchActiveSessions = async () => {
+    useEffect(() => {
+        setCode(lab.submissionDetails?.submittedCode || '');
+        setMessage(null); 
+    }, [lab]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setMessage(null);
+        onError(null);
+        
         try {
-            // Calls the new route to get sessions currently open for submission
-            const response = await api.get(`/student/sessions/active/${courseId}`);
-            setSessions(response.data.sessions || []);
+            if (hasSubmitted) {
+                setMessage({ type: 'warning', text: 'You have already submitted this lab.' });
+                setIsSubmitting(false);
+                return;
+            }
+            
+            const payload = {
+                sessionId: lab._id, 
+                studentId: userId,
+                submittedCode: code
+            };
+            
+            await api.post('/submissions', payload); 
+            
+            setMessage({ type: 'success', text: 'Lab submitted successfully!' });
+            onSubmissionSuccess(); 
+
         } catch (error) {
-             setMessage({ type: 'error', text: 'Failed to fetch active sessions.' });
+            const msg = error.response?.data?.message || 'Error processing submission.';
+            onError({ type: 'error', text: msg });
+            setMessage({ type: 'error', text: msg });
+        } finally {
+            setIsSubmitting(false);
         }
     };
     
-    useEffect(() => {
-        fetchActiveSessions();
-    }, [courseId]);
+    const gradeDetails = lab.submissionDetails && (
+        <div className="p-4 bg-gray-100 rounded-lg space-y-2">
+            <p className="font-semibold text-lg text-indigo-800">Grade: {lab.submissionDetails.marks} / {lab.maxMarks}</p>
+            <p className="text-sm">Feedback: {lab.submissionDetails.feedback || 'No feedback yet.'}</p>
+            <p className="text-xs text-gray-500">Submitted: {moment(lab.submissionDetails.submittedAt).format('MMM D, YYYY h:mm A')}</p>
+        </div>
+    );
 
-    const handleSubmission = async (e) => {
-        e.preventDefault();
-        setMessage(null);
-        setLoading(true);
-
-        if (!submissionForm.sessionId || !submissionForm.code) {
-            setMessage({ type: 'error', text: 'Please select a session and paste your code.' });
-            setLoading(false);
-            return;
-        }
-
-        try {
-            // Calls the new route to submit code
-            const response = await api.post('/student/submissions', {
-                sessionId: submissionForm.sessionId,
-                studentId: user.id, // Get student ID from context
-                submittedCode: submissionForm.code,
-            });
-
-            setMessage({ type: 'success', text: response.data.message });
-            setSubmissionForm({ sessionId: '', code: '' });
+    return (
+        <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-600 space-y-4">
+            <h3 className="text-xl font-bold text-green-700">Lab Submission: {lab.title}</h3>
             
-        } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Submission failed. Check if time window is open.' });
+            {gradeDetails}
+
+            {/* Global variable check for form visibility/interactivity */}
+            {!isSubmissionOpen && (
+                <div className="p-4 bg-red-100 text-red-700 rounded-lg font-semibold">
+                    Submissions are currently closed by the instructor.
+                </div>
+            )}
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <textarea 
+                    value={code} 
+                    onChange={(e) => setCode(e.target.value)} 
+                    placeholder="Paste your code or lab notes here..."
+                    rows="15" 
+                    required
+                    disabled={isFormDisabled} 
+                    className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm"
+                />
+                
+                <button
+                    type="submit"
+                    disabled={isFormDisabled} 
+                    className="w-full p-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                >
+                    {isSubmitting ? 'Submitting...' : hasSubmitted ? 'Submitted (Read-Only)' : 'Submit Lab Work'}
+                </button>
+            </form>
+        </div>
+    );
+};
+
+
+const LabSessionCard = ({ lab, isSelected, onClick }) => {
+    const cardClass = isSelected ? 'bg-green-100 ring-4 ring-green-500' : 'bg-white hover:bg-gray-50';
+    const statusColor = lab.submissionStatus === 'Submitted' ? 'text-green-600' : 'text-red-600';
+    const statusText = lab.submissionDetails?.marks !== undefined && lab.submissionDetails.marks !== null 
+        ? `Graded: ${lab.submissionDetails.marks}/${lab.maxMarks}` 
+        : lab.submissionStatus;
+    
+    return (
+        <div 
+            onClick={() => onClick(lab)}
+            className={`p-4 border rounded-lg cursor-pointer transition ${cardClass}`}
+        >
+            <p className="font-bold">{lab.title}</p>
+            <p className="text-sm text-gray-600">Due: {moment(lab.date).format('MMM D, YYYY')}</p>
+            <p className={`text-xs font-semibold ${statusColor}`}>{statusText}</p>
+        </div>
+    );
+};
+
+
+const LabSubmission = () => {
+    const { courseId } = useParams();
+    const [course, setCourse] = useState(null);
+    const [labs, setLabs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedLab, setSelectedLab] = useState(null);
+    
+    const fetchLabsAndSubmissions = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await api.get(`/student/labs/${courseId}`);
+            const { course, labs } = response.data;
+            
+            setCourse(course);
+            setLabs(labs);
+
+            const newSelection = labs.find(lab => lab._id === selectedLab?._id) || labs[0];
+            setSelectedLab(newSelection || null);
+            
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to load lab sessions.');
         } finally {
             setLoading(false);
         }
-    };
+    }, [courseId, selectedLab?._id]);
+
+    useEffect(() => {
+        fetchLabsAndSubmissions();
+    }, [fetchLabsAndSubmissions]);
+
+    if (loading) return <LoadingSpinner />;
+    if (error) return <div className="p-4 bg-red-100 text-red-800 rounded max-w-7xl mx-auto">Error: {error}</div>;
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto p-4">
-            <h1 className="text-3xl font-bold text-green-700 border-b pb-2">
-                Lab Submissions 💻
+        <div className="max-w-7xl mx-auto space-y-6">
+            <h1 className="text-3xl font-extrabold text-green-700 border-b pb-3">
+                Lab Submissions for: **{course?.name}** ({courseId})
             </h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div className="lg:col-span-1 space-y-4">
+                    <h2 className="text-2xl font-bold text-gray-800">Lab Sessions</h2>
+                    {labs.map((lab) => (
+                        <LabSessionCard 
+                            key={lab._id} 
+                            lab={lab} 
+                            isSelected={selectedLab?._id === lab._id}
+                            onClick={setSelectedLab}
+                        />
+                    ))}
+                </div>
 
-            {/* --- Submission Form --- */}
-            <div className="bg-white p-6 rounded-lg shadow-lg border-t-4 border-green-500">
-                <h2 className="text-2xl font-semibold mb-4">Submit Lab Work</h2>
-                {sessions.length === 0 && <p className="text-red-500">No active lab sessions available for submission right now.</p>}
-
-                <form onSubmit={handleSubmission} className="space-y-4">
-                    {/* Select Session Dropdown */}
-                    <select
-                        value={submissionForm.sessionId}
-                        onChange={(e) => setSubmissionForm({...submissionForm, sessionId: e.target.value})}
-                        required
-                        className="w-full p-2 border rounded"
-                        disabled={sessions.length === 0}
-                    >
-                        <option value="">Select Active Lab Session</option>
-                        {sessions.map(session => (
-                            <option key={session._id} value={session._id}>
-                                {session.title} (Closes: {moment(session.endTime).format('h:mm A')})
-                            </option>
-                        ))}
-                    </select>
-                    
-                    {/* Code Submission Area */}
-                    <textarea 
-                        value={submissionForm.code}
-                        onChange={(e) => setSubmissionForm({...submissionForm, code: e.target.value})}
-                        placeholder="Paste your code here..."
-                        rows="10"
-                        required
-                        className="w-full p-2 border rounded font-mono text-sm"
-                    />
-
-                    <button type="submit" disabled={loading || sessions.length === 0} className="w-full p-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
-                        Submit Code
-                    </button>
-                </form>
-                {message && <p className={`mt-3 text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>}
+                <div className="lg:col-span-2 space-y-6">
+                    {selectedLab && (
+                        <SubmissionBox 
+                            lab={selectedLab} 
+                            onSubmissionSuccess={fetchLabsAndSubmissions}
+                            onError={setError}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );

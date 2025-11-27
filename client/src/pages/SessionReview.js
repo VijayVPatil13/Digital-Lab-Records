@@ -1,36 +1,168 @@
 // client/src/pages/SessionReview.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../utils/api';
 import moment from 'moment';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+const ReviewTable = ({ studentData, session, onGrade }) => {
+    // Local state to manage grade changes before saving to server
+    const [grades, setGrades] = useState({});
+    const [message, setMessage] = useState(null);
+
+    useEffect(() => {
+        // Initialize grades state from fetched submission data
+        const initialGrades = {};
+        studentData.forEach(item => {
+            initialGrades[item.student._id] = {
+                marks: item.submission.marks || 0,
+                feedback: item.submission.feedback || '',
+                submissionId: item.submission._id,
+                hasSubmitted: item.hasSubmitted,
+                isSubmitting: false,
+            };
+        });
+        setGrades(initialGrades);
+    }, [studentData]);
+
+    const handleChange = (studentId, field, value) => {
+        setGrades(prev => ({
+            ...prev,
+            [studentId]: { ...prev[studentId], [field]: value }
+        }));
+    };
+
+    const handleGradeSubmission = async (studentId) => {
+        const gradeInfo = grades[studentId];
+        
+        if (!gradeInfo.hasSubmitted || !gradeInfo.submissionId) {
+            setMessage({ type: 'error', text: `Student has no submission to grade.` });
+            return;
+        }
+
+        if (gradeInfo.marks < 0 || gradeInfo.marks > session.maxMarks) {
+            setMessage({ type: 'error', text: `Marks must be between 0 and ${session.maxMarks}.` });
+            return;
+        }
+
+        setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], isSubmitting: true } }));
+        setMessage(null);
+
+        try {
+            // PUT to /api/submissions/grade/:submissionId
+            const response = await api.put(`/submissions/grade/${gradeInfo.submissionId}`, {
+                marks: parseFloat(gradeInfo.marks),
+                feedback: gradeInfo.feedback
+            });
+            setMessage({ type: 'success', text: `Grade saved for ${studentData.find(s => s.student._id === studentId).student.fullName}.` });
+            onGrade(studentId, response.data.submission);
+
+        } catch (error) {
+            setMessage({ type: 'error', text: error.response?.data?.message || 'Error saving grade.' });
+        } finally {
+            setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], isSubmitting: false } }));
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            {message && (
+                <div className={`p-3 rounded-lg text-sm font-medium ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                    {message.text}
+                </div>
+            )}
+            <div className="overflow-x-auto bg-white rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs truncate">Submitted Content</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marks (Max: {session.maxMarks})</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feedback</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {studentData.map(item => {
+                            const studentId = item.student._id;
+                            const gradeInfo = grades[studentId] || {};
+
+                            return (
+                                <tr key={studentId}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {item.student.fullName}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.hasSubmitted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {item.hasSubmitted ? 'Submitted' : 'Pending'}
+                                        </span>
+                                    </td>
+                                    {/* Tabulated Submitted Content */}
+                                    <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
+                                        <pre className="whitespace-pre-wrap max-h-16 overflow-y-auto bg-gray-50 p-2 rounded-sm">
+                                            {item.submission.submittedCode ? item.submission.submittedCode.substring(0, 200) + (item.submission.submittedCode.length > 200 ? '...' : '') : 'No code submitted'}
+                                        </pre>
+                                    </td>
+                                    {/* Marks */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <input
+                                            type="number"
+                                            value={gradeInfo.marks}
+                                            onChange={(e) => handleChange(studentId, 'marks', e.target.value)}
+                                            min="0"
+                                            max={session.maxMarks}
+                                            disabled={!item.hasSubmitted || gradeInfo.isSubmitting}
+                                            className="w-16 border rounded p-1 text-center"
+                                        />
+                                    </td>
+                                    {/* Feedback */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <input
+                                            type="text"
+                                            value={gradeInfo.feedback}
+                                            onChange={(e) => handleChange(studentId, 'feedback', e.target.value)}
+                                            disabled={!item.hasSubmitted || gradeInfo.isSubmitting}
+                                            placeholder="Add feedback"
+                                            className="w-full border rounded p-1"
+                                        />
+                                    </td>
+                                    {/* Action */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button
+                                            onClick={() => handleGradeSubmission(studentId)}
+                                            disabled={!item.hasSubmitted || gradeInfo.isSubmitting}
+                                            className="px-3 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700 disabled:opacity-50"
+                                        >
+                                            {gradeInfo.isSubmitting ? 'Saving...' : 'Save Grade'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
 
 const SessionReview = () => {
     const { sessionId } = useParams();
-    const [sessionTitle, setSessionTitle] = useState('');
-    const [reviewData, setReviewData] = useState([]);
+    const [session, setSession] = useState(null);
+    const [reviewList, setReviewList] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState(null);
-    const [attendanceChanges, setAttendanceChanges] = useState({});
+    const [error, setError] = useState(null);
 
     const fetchReviewData = useCallback(async () => {
-        if (!sessionId) return;
         setLoading(true);
+        setError(null);
         try {
-            // Fetch combined data from the backend
-            const response = await api.get(`/faculty/sessions/${sessionId}/review`);
-            setSessionTitle(response.data.sessionTitle);
-            setReviewData(response.data.reviewData);
-            
-            // Initialize attendance changes map
-            const initialAttendance = response.data.reviewData.reduce((acc, item) => {
-                acc[item.studentId] = item.attended;
-                return acc;
-            }, {});
-            setAttendanceChanges(initialAttendance);
-
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to load session review data.' });
+            const response = await api.get(`/faculty/review/${sessionId}`);
+            setSession(response.data.session);
+            setReviewList(response.data.reviewList);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to load session review data.');
         } finally {
             setLoading(false);
         }
@@ -39,108 +171,33 @@ const SessionReview = () => {
     useEffect(() => {
         fetchReviewData();
     }, [fetchReviewData]);
-
-    const handleAttendanceToggle = (studentId, currentStatus) => {
-        setAttendanceChanges(prev => ({
-            ...prev,
-            [studentId]: !currentStatus
+    
+    const updateReviewListOnGrade = (studentId, updatedSubmission) => {
+        setReviewList(prevList => prevList.map(item => {
+            if (item.student._id === studentId) {
+                return { 
+                    ...item, 
+                    submission: updatedSubmission,
+                    hasSubmitted: true
+                };
+            }
+            return item;
         }));
     };
 
-    const handleSaveAttendance = async () => {
-        const attendanceUpdates = Object.keys(attendanceChanges).map(studentId => ({
-            studentId,
-            attended: attendanceChanges[studentId]
-        }));
-
-        try {
-            const response = await api.put(`/faculty/sessions/${sessionId}/attendance`, { attendanceUpdates });
-            setMessage({ type: 'success', text: response.data.message });
-            fetchReviewData(); // Refresh data
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to save attendance.' });
-        }
-    };
-
-    if (loading) return <div className="p-4">Loading session review...</div>;
-    if (message?.type === 'error') return <div className="p-4 text-red-600">{message.text}</div>;
-
-    // Calculate total attendance and submissions for the footer
-    const totalStudents = reviewData.length;
-    const attendedCount = reviewData.filter(d => d.attended).length;
-    const submittedCount = reviewData.filter(d => d.submitted).length;
-    const attendancePercentage = totalStudents > 0 ? (attendedCount / totalStudents * 100).toFixed(1) : 0;
-
+    if (loading) return <LoadingSpinner />;
+    if (error) return <div className="p-4 bg-red-100 text-red-800 rounded max-w-6xl mx-auto">Error: {error}</div>;
+    if (!session) return <div className="text-center">Session not found.</div>;
 
     return (
-        <div className="space-y-6 max-w-6xl mx-auto p-4">
-            <h1 className="text-3xl font-bold text-purple-700 border-b pb-2">
-                Review: {sessionTitle}
+        <div className="max-w-6xl mx-auto space-y-6">
+            <h1 className="text-3xl font-extrabold text-indigo-700">
+                Review Session: **{session.title}**
             </h1>
+            <p className="text-gray-600">Course: {session.course.name} ({session.course.code}) | Date: {moment(session.date).format('MMM D, YYYY h:mm A')}</p>
+            <p className="text-sm border-l-4 border-indigo-500 pl-3 italic">{session.description}</p>
             
-            <div className="flex justify-between items-center">
-                <button onClick={handleSaveAttendance} className="p-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
-                    Save Attendance Changes
-                </button>
-                <button className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                    Download Report (PDF)
-                </button>
-            </div>
-
-            <div className="bg-white shadow-lg rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Time</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {reviewData.map((data) => (
-                            <tr key={data.studentId}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{data.fullName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={attendanceChanges[data.studentId]} 
-                                        onChange={() => handleAttendanceToggle(data.studentId, attendanceChanges[data.studentId])}
-                                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                                    />
-                                    <span className={`ml-2 text-sm font-semibold ${attendanceChanges[data.studentId] ? 'text-green-600' : 'text-red-600'}`}>
-                                        {attendanceChanges[data.studentId] ? 'Present' : 'Absent'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span className={`font-semibold ${data.submitted ? 'text-blue-600' : 'text-gray-400'}`}>
-                                        {data.submitted ? 'Submitted' : 'Pending'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {data.submissionTime ? moment(data.submissionTime).format('h:mm A') : 'N/A'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
-                                    {data.grade !== null ? data.grade : 'N/G'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button className="text-indigo-600 hover:text-indigo-900 mr-3">View Code</button>
-                                    <button className="text-purple-600 hover:text-purple-900">Grade</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                    <tfoot className="bg-gray-100">
-                        <tr>
-                            <td colSpan="2" className="px-6 py-3 text-sm font-bold text-gray-700">Totals: {totalStudents} Students</td>
-                            <td colSpan="1" className="px-6 py-3 text-sm font-bold text-gray-700">Submissions: {submittedCount}</td>
-                            <td colSpan="3" className="px-6 py-3 text-right text-sm font-bold text-gray-700">Attendance: {attendedCount} ({attendancePercentage}%)</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            <ReviewTable studentData={reviewList} session={session} onGrade={updateReviewListOnGrade} />
         </div>
     );
 };

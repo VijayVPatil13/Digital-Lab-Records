@@ -1,28 +1,40 @@
 // client/src/components/forms/LoginForm.js
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import api from '../../utils/api'; 
 
 const LoginForm = ({ onError, initialEmail, initialPassword }) => {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
   
-  // Update state when initialEmail changes (i.e., when user clicks a role button)
   useEffect(() => {
-    setEmail(initialEmail);
-    setPassword(initialPassword);
+    // Only update if initial values change, allows user to type
+    if (initialEmail) setEmail(initialEmail);
+    if (initialPassword) setPassword(initialPassword);
   }, [initialEmail, initialPassword]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     onError(null);
     setIsSubmitting(true);
+    
     try {
-      await login(email, password);
+      const response = await api.post('/auth/login', { email, password });
+      const { token, user } = response.data; 
+
+      login(token, user); 
+      
+      const role = user.role.toLowerCase();
+      // Redirect based on role
+      navigate(`/${role}/dashboard`, { replace: true });
+      
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed. Check credentials.';
-      onError(msg);
+      const msg = err.response?.data?.message || 'Login failed. Check credentials and ensure server is running.';
+      onError({ type: 'error', text: msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -31,25 +43,25 @@ const LoginForm = ({ onError, initialEmail, initialPassword }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-gray-700 font-medium mb-1">Email (Pre-filled for {email.split('@')[0].toUpperCase()})</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg"
-          required
-          disabled={isSubmitting}
+        <label className="block text-gray-700 font-medium mb-1">Email</label>
+        <input 
+          type="email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)} 
+          className="w-full p-3 border border-gray-300 rounded-lg" 
+          required 
+          disabled={isSubmitting} 
         />
       </div>
       <div>
         <label className="block text-gray-700 font-medium mb-1">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg"
-          required
-          disabled={isSubmitting}
+        <input 
+          type="password" 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
+          className="w-full p-3 border border-gray-300 rounded-lg" 
+          required 
+          disabled={isSubmitting} 
         />
       </div>
       <button

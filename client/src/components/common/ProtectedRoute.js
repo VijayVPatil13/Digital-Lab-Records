@@ -2,23 +2,24 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuth, loading, user } = useAuth();
+const ProtectedRoute = ({ children, role: requiredRole }) => {
+  const { isLoading, user, role } = useAuth();
 
-  if (loading) {
-    return <div className="text-center p-8 text-lg">Initializing...</div>; 
+  if (isLoading) {
+    return <LoadingSpinner />; 
   }
   
-  // Original secure logic (commented out for preview):
-  // if (!isAuth) {
-  //   return <Navigate to="/login" replace />;
-  // }
-  // if (allowedRoles && !allowedRoles.includes(user.role)) {
-  //   return <Navigate to="/error/403" replace />;
-  // }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // TEMPORARY: Render children wrapped in the layout defined in App.js
+  if (requiredRole && requiredRole !== role) {
+    const currentRolePath = role ? `/${role.toLowerCase()}/dashboard` : '/login';
+    return <Navigate to={currentRolePath} replace />;
+  }
+
   return children;
 };
 

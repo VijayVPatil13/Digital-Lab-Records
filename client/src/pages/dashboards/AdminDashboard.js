@@ -12,14 +12,21 @@ const AdminDashboard = () => {
         Admin Portal ⚙️
       </h1>
       <p className="text-lg text-gray-600 mb-4">
-        Welcome, **Admin** (User ID: {user?.id || 'Preview Mode'}). This area is protected.
+        Welcome, **Admin** (User ID: {user?.id || 'Preview Mode'}).
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link to="/admin/courses" className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition border-l-4 border-blue-500 block">
-            <h2 className="text-xl font-medium mb-3 text-blue-800">Course & Enrollment</h2>
-            <p className="text-gray-700">Add, edit, and assign Faculty/Students to courses.</p>
+            <h2 className="text-xl font-medium mb-3 text-blue-800">Course Management</h2>
+            <p className="text-gray-700">View all courses, create new courses, and assign faculty.</p>
         </Link>
+        
+        {/* Placeholder for other Admin functions */}
+        <div className="bg-white p-6 rounded-lg shadow border-l-4 border-gray-500">
+             <h2 className="text-xl font-medium mb-3 text-gray-800">User Management (Future)</h2>
+            <p className="text-gray-700">Manage user roles and accounts.</p>
+        </div>
+
       </div>
     </div>
   );
