@@ -71,20 +71,18 @@ router.get('/courses/enrolled', async (req, res) => {
     try {
         const studentId = req.user.id; // Correctly pull ID from JWT payload
         
-        // Finds approved enrollment records and populates the course data
-        const enrollments = await Enrollment.find({ 
-            student: studentId, 
-            status: 'approved' 
-        }).populate({
-            path: 'course', // Populate the Course document
-            select: 'name code description faculty students', 
-            populate: {
-                path: 'faculty', // Populate faculty User details
-                select: 'fullName'
-            }
-        }); 
-
-        // Extract the course object from each enrollment record
+        // Finds approved enrollment records and populates the course data
+        const enrollments = await Enrollment.find({ 
+            student: studentId, 
+            status: 'approved' 
+        }).populate({
+            path: 'course', // Populate the Course document
+            select: 'name code description faculty students', 
+            populate: {
+                path: 'faculty', // Populate faculty User details
+                select: 'firstName lastName'
+            }
+        });        // Extract the course object from each enrollment record
         const courses = enrollments
             .map(e => e.course)
             .filter(c => c !== null); // Filter out any null courses
