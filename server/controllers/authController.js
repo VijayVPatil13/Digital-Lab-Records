@@ -115,6 +115,54 @@ exports.registerAdmin = asyncHandler(async (req, res) => {
     res.status(201).json({ user: { id: newAdmin._id, fullName: newAdmin.fullName, email: newAdmin.email, role: newAdmin.role }, message: 'Admin account created.' });
 });
 
+// Admin-only: register a faculty account
+exports.registerFaculty = asyncHandler(async (req, res) => {
+    const { fullName, email, password } = req.body;
+
+    if (!fullName || !email || !password) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'User already exists.' });
+
+    const names = fullName.trim().split(/\s+/);
+    const firstName = names[0] || 'Faculty';
+    const lastName = names.length > 1 ? names.slice(1).join(' ') : 'Faculty';
+
+    const newFaculty = await User.create({ firstName, lastName, email, passwordHash: password, role: 'Faculty' });
+
+    res.status(201).json({ user: { id: newFaculty._id, fullName: newFaculty.fullName, email: newFaculty.email, role: newFaculty.role }, message: 'Faculty account created.' });
+});
+
+// Admin-only: list all faculty accounts
+exports.listFaculty = asyncHandler(async (req, res) => {
+    const faculties = await User.find({ role: 'Faculty' }).select('_id firstName lastName email role');
+    res.json({ faculties });
+});
+
+// Admin-only: delete a faculty account by ID
+exports.deleteFaculty = asyncHandler(async (req, res) => {
+    const { facultyId } = req.params;
+
+    if (!facultyId) {
+        return res.status(400).json({ message: 'Faculty ID is required.' });
+    }
+
+    const faculty = await User.findById(facultyId);
+    if (!faculty) {
+        return res.status(404).json({ message: 'Faculty account not found.' });
+    }
+
+    if (faculty.role !== 'Faculty') {
+        return res.status(400).json({ message: 'This user is not a faculty member.' });
+    }
+
+    await User.findByIdAndDelete(facultyId);
+
+    res.json({ message: 'Faculty account deleted successfully.' });
+});
+
 exports.loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     try {
