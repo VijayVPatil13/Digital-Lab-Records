@@ -64,7 +64,6 @@ const SignupForm = ({ onError, onSignupSuccess }) => {
           required
         >
           <option value="Student">Student</option>
-          <option value="Faculty">Faculty</option>
         </select>
       </div>
 

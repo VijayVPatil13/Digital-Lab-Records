@@ -14,6 +14,7 @@ import SessionReview from './pages/SessionReview';
 import SubmissionDetail from './pages/SubmissionDetail';
 import LabSubmission from './pages/LabSubmission';
 import CourseManagement from './pages/dashboards/CourseManagement';
+import AdminDashboard from './pages/dashboards/AdminDashboard';
 import ErrorPage from './pages/ErrorPage'; 
 
 function App() {
@@ -38,6 +39,8 @@ function App() {
                         <Route path="/faculty/course/:courseCode/sessions" element={<ProtectedRoute role="Faculty"><SessionManager /></ProtectedRoute>} />
                         <Route path="/faculty/session/:sessionId/review" element={<ProtectedRoute role="Faculty"><SessionReview /></ProtectedRoute>} />
                         <Route path="/faculty/submission/:submissionId" element={<ProtectedRoute role="Faculty"><SubmissionDetail /></ProtectedRoute>} />
+                        {/* ADMIN ROUTE */}
+                        <Route path="/admin/dashboard" element={<ProtectedRoute role="Admin"><AdminDashboard /></ProtectedRoute>} />
                         
                         {/* Error Route */}
                          <Route path="/error/:code" element={<ErrorPage />} />

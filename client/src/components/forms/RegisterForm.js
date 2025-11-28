@@ -74,7 +74,6 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
                 <label className="block text-gray-700 font-medium mb-1">Role</label>
                 <select name="role" value={formData.role} onChange={handleChange} required className="w-full p-3 border rounded-lg">
                     <option value="Student">Student</option>
-                    <option value="Faculty">Faculty</option>
                 </select>
             </div>
             <button

@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api'; 
 
-const LoginForm = ({ onError, initialEmail = '', initialPassword = '' }) => {
+const LoginForm = ({ onError, initialEmail = '', initialPassword = '', selectedRole = 'student' }) => {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +23,9 @@ const LoginForm = ({ onError, initialEmail = '', initialPassword = '' }) => {
     setIsSubmitting(true);
     
     try {
-      const response = await api.post('/auth/login', { email, password });
+      // If logging in as admin use the admin-login endpoint
+      const endpoint = selectedRole === 'admin' ? '/auth/admin-login' : '/auth/login';
+      const response = await api.post(endpoint, { email, password });
       const { token, user } = response.data; 
 
       login(token, user); 

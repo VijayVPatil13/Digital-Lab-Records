@@ -47,7 +47,7 @@ const LoginPage = () => {
                                 setSelectedRole('faculty');
                                 setAuthError(null);
                             }}
-                            className={`w-1/3 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'faculty' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            className={`w-1/4 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'faculty' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                         >
                             Faculty
                         </button>
@@ -59,6 +59,12 @@ const LoginPage = () => {
                             className={`w-1/3 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'student' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                         >
                             Student
+                        </button>
+                        <button
+                            onClick={() => { setSelectedRole('admin'); setAuthError(null); }}
+                            className={`w-1/4 p-3 rounded-lg font-medium text-sm transition ${selectedRole === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            Admin
                         </button>
                     </div>
                 )}
@@ -74,6 +80,7 @@ const LoginPage = () => {
                 {isLogin ? (
                     <LoginForm
                         onError={setAuthError}
+                        selectedRole={selectedRole}
                     />
                 ) : (
                     <RegisterForm
