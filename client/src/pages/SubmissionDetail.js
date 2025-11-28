@@ -48,6 +48,10 @@ const SubmissionDetail = () => {
             const res = await api.put(`/submissions/grade/${submission._id}`, { marks: numericMarks, feedback });
             setSubmission(res.data.submission);
             setError(null);
+            // After saving, navigate back to the session review and pass updated submission in state
+            const sessionId = res.data.submission.session;
+            navigate(`/faculty/session/${sessionId}/review`, { state: { updatedSubmission: res.data.submission } });
+            return;
         } catch (err) {
             setError(err.response?.data?.message || 'Error saving grade.');
         } finally {

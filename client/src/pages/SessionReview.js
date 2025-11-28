@@ -1,6 +1,6 @@
 // client/src/pages/SessionReview.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
 import moment from 'moment';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -157,13 +157,30 @@ const SessionReview = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const location = useLocation();
+
     const fetchReviewData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await api.get(`/faculty/review/${sessionId}`);
             setSession(response.data.session);
-            setReviewList(response.data.reviewList);
+            // If navigation state contains an updatedSubmission, merge it into the returned reviewList
+            const returnedList = response.data.reviewList || [];
+            const updatedSubmission = location.state?.updatedSubmission;
+            if (updatedSubmission) {
+                const merged = returnedList.map(item => {
+                    if (item.submission && String(item.submission._id) === String(updatedSubmission._id)) {
+                        return { ...item, submission: updatedSubmission, hasSubmitted: true };
+                    }
+                    return item;
+                });
+                setReviewList(merged);
+                // Replace history state so this only applies once
+                try { navigate(`/faculty/session/${sessionId}/review`, { replace: true }); } catch(e) {}
+            } else {
+                setReviewList(returnedList);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to load session review data.');
         } finally {
