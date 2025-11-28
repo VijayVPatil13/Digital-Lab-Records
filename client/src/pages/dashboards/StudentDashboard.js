@@ -88,35 +88,34 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
-      <h1 className="text-3xl font-extrabold text-green-700 mb-6 border-b pb-3 flex items-center">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen rounded-xl">
+      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
         Student Dashboard 
       </h1>
-
-      <p className="text-lg text-gray-700">
-        Welcome, {fullName || 'Student'}. View your enrolled classes or join a new one.
+      <p className="text-lg text-gray-700 font-medium">
+        Welcome, <span className="text-green-600 font-bold">{fullName || 'Student'}</span>. View your enrolled classes or join a new one.
       </p>
 
       {/* Message Display (For errors or enrollment status) */}
       {message && (
         <div
-          className={`p-3 rounded-lg text-sm font-medium ${
+          className={`p-4 rounded-lg text-sm font-medium border-l-4 ${
             message.type === 'error'
-              ? 'bg-red-100 text-red-800'
-              : 'bg-green-100 text-green-800'
+              ? 'bg-red-50 text-red-800 border-red-400'
+              : 'bg-green-50 text-green-800 border-green-400'
           }`}
         >
           {message.text}
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-8">
+      <div className="space-y-8">
 
-        {/* Join Course Section (centered) */}
-        <div className="w-full max-w-md space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-600 mx-auto">
-            <h2 className="text-xl font-bold mb-4 text-green-700 flex items-center">
-              <span className="mr-2">🔗</span> Join New Course
+        {/* Join Course Section */}
+        <div className="w-full">
+          <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-green-500">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center">
+              <span className="mr-3 text-2xl">🔗</span> Join New Course
             </h2>
 
             <form onSubmit={handleJoinCourse} className="space-y-4">
@@ -126,14 +125,14 @@ const StudentDashboard = () => {
                 onChange={(e) => setJoinCourseCode(e.target.value)}
                 placeholder="Enter Course Code (e.g., CSL37)"
                 required
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                 disabled={joinLoading}
               />
 
               <button
                 type="submit"
                 disabled={joinLoading}
-                className="w-full p-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                className="w-full p-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-50 shadow-md"
               >
                 {joinLoading ? 'Requesting...' : 'Join Course'}
               </button>
@@ -142,8 +141,8 @@ const StudentDashboard = () => {
         </div>
 
         {/* Enrolled Courses */}
-        <div className="w-full space-y-6">
-          <h2 className="text-2xl font-bold text-gray-800">
+        <div className="w-full space-y-4">
+          <h2 className="text-3xl font-bold text-gray-800 border-b-2 border-green-500 pb-2">
             Enrolled Courses
           </h2>
 
@@ -151,20 +150,21 @@ const StudentDashboard = () => {
             {loading ? (
               <LoadingSpinner />
             ) : courses.length === 0 ? (
-              <p className="text-gray-500 italic">
-                You are not enrolled in any approved courses yet.
-              </p>
+              <div className="bg-white p-8 rounded-xl text-center">
+                <p className="text-gray-600 italic text-lg">
+                  You are not enrolled in any approved courses yet.
+                </p>
+              </div>
             ) : (
-              <div className="flex flex-wrap items-start -mx-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((course) => (
-                  <div key={course.code || course._id} className="px-3 w-full sm:w-1/2 lg:w-1/3 mb-6">
-                    <CourseCard
-                      course={course}
-                      role="Student"
-                      onActionClick={handleAccessLabs}
-                      actionLabel="Access Labs"
-                    />
-                  </div>
+                  <CourseCard
+                    key={course.code || course._id}
+                    course={course}
+                    role="Student"
+                    onActionClick={handleAccessLabs}
+                    actionLabel="Access Labs"
+                  />
                 ))}
               </div>
             )}

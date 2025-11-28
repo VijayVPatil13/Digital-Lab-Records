@@ -11,23 +11,23 @@ const LabReview = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Pending Lab Submissions </h1>
-      <p className="text-gray-600">Select a submission to grade and provide feedback.</p>
+    <div className="space-y-6 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen rounded-xl max-w-7xl mx-auto">
+      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">Pending Lab Submissions</h1>
+      <p className="text-gray-700 font-medium">Select a submission to grade and provide feedback.</p>
       
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
         {mockSubmissions.map(sub => (
-          <div key={sub.id} className="flex justify-between items-center p-4 border-b hover:bg-gray-50">
+          <div key={sub.id} className="flex justify-between items-center p-4 border-b hover:bg-gray-50 transition">
             <div>
-              <p className="font-semibold">{sub.lab} - {sub.student}</p>
-              <p className="text-sm text-gray-500">{sub.text.substring(0, 70)}...</p>
+              <p className="font-semibold text-gray-800">{sub.lab} - {sub.student}</p>
+              <p className="text-sm text-gray-600">{sub.text.substring(0, 70)}...</p>
             </div>
             {sub.grade ? (
-                <span className="text-sm text-green-600 font-bold">Graded ({sub.grade})</span>
+                <span className="text-sm text-green-600 font-bold bg-green-50 px-3 py-1 rounded-lg">Graded ({sub.grade})</span>
             ) : (
                 <button 
                   onClick={() => setSelectedSubmission(sub)}
-                  className="bg-yellow-600 text-white p-2 rounded text-sm hover:bg-yellow-700"
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-700 transition shadow-md"
                 >
                   Review
                 </button>

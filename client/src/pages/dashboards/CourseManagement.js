@@ -63,10 +63,10 @@ const CourseManagement = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <h1 className="text-3xl font-extrabold text-blue-700 border-b pb-3">Course Management</h1>
+    <div className="max-w-7xl mx-auto space-y-6 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 min-h-screen rounded-xl">
+      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Course Management</h1>
       
-      {error && <div className="p-4 bg-red-100 text-red-800 rounded">{error}</div>}
+      {error && <div className="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 font-medium">Error: {error}</div>}
       
       <TabbedContainer tabs={tabs} />
     </div>

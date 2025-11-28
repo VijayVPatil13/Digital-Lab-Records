@@ -60,76 +60,79 @@ const SubmissionDetail = () => {
     };
 
     if (loading) return <LoadingSpinner />;
-    if (error) return <div className="p-4 bg-red-100 text-red-800 rounded max-w-4xl mx-auto">Error: {error}</div>;
-    if (!submission) return <div className="p-4">Submission not found.</div>;
+    if (error) return <div className="p-4 bg-red-50 text-red-800 rounded-lg max-w-4xl mx-auto border border-red-200">Error: {error}</div>;
+    if (!submission) return <div className="p-4 text-gray-600">Submission not found.</div>;
 
     const student = submission.student || {};
     const session = submission.session || {};
     const course = session.course || submission.course || {};
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 p-4">
-            <button onClick={() => navigate(-1)} className="text-sm text-indigo-600">&larr; Back</button>
+        <div className="max-w-4xl mx-auto space-y-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen rounded-xl">
+            <button onClick={() => navigate(-1)} className="text-sm text-indigo-600 font-semibold hover:text-indigo-800">← Back to Review</button>
 
-            <h1 className="text-2xl font-bold">Submission Detail</h1>
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">Submission Detail</h1>
 
-            <div className="bg-white p-4 rounded shadow">
-                <h2 className="font-semibold">Student</h2>
-                <p>{student.firstName} {student.lastName} ({student.email})</p>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-3">Student</h2>
+                <p className="text-lg text-gray-700"><span className="font-semibold">{student.firstName} {student.lastName}</span> <span className="text-gray-600">({student.email})</span></p>
             </div>
 
-            <div className="bg-white p-4 rounded shadow">
-                <h2 className="font-semibold">Session</h2>
-                <p className="font-bold">{session.title}</p>
-                <p>Course: {course.name} ({course.code})</p>
-                <p>Start: {session.startTime ? moment(session.startTime).format('MMM D, YYYY h:mm A') : '—'}</p>
-                <p>End: {session.endTime ? moment(session.endTime).format('MMM D, YYYY h:mm A') : '—'}</p>
-                <p className="text-sm text-gray-600">{session.description}</p>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-indigo-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-3">Session</h2>
+                <p className="text-lg font-bold text-gray-900">{session.title}</p>
+                <p className="text-gray-700">Course: <span className="font-semibold text-indigo-600">{course.name}</span> ({course.code})</p>
+                <p className="text-sm text-gray-600">Start: {session.startTime ? moment(session.startTime).format('MMM D, YYYY h:mm A') : '—'}</p>
+                <p className="text-sm text-gray-600">End: {session.endTime ? moment(session.endTime).format('MMM D, YYYY h:mm A') : '—'}</p>
+                <p className="text-sm text-gray-700 italic mt-2 bg-gray-50 p-3 rounded">{session.description}</p>
             </div>
 
-            <div className="bg-white p-4 rounded shadow">
-                <h2 className="font-semibold">Submitted Code</h2>
-                <pre className="whitespace-pre-wrap p-3 bg-gray-50 rounded max-h-96 overflow-y-auto">{submission.submittedCode || 'No code submitted'}</pre>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-gray-500">
+                <h2 className="text-xl font-bold text-gray-800 mb-3">Submitted Code</h2>
+                <pre className="whitespace-pre-wrap p-4 bg-gray-900 text-gray-100 rounded-xl max-h-96 overflow-y-auto font-mono text-sm">{submission.submittedCode || 'No code submitted'}</pre>
             </div>
 
-            <div className={`p-6 rounded shadow border-l-4 ${
+            <div className={`p-6 rounded-2xl shadow-lg border-t-4 ${
                 submission.marks !== undefined && submission.marks !== null && submission.marks >= 0
                     ? 'bg-green-50 border-green-500'
                     : 'bg-yellow-50 border-yellow-500'
             }`}>
-                <h2 className="font-semibold text-lg mb-2">Grade Status</h2>
+                <h2 className="font-bold text-lg mb-3 text-gray-800">Grade Status</h2>
                 {submission.marks !== undefined && submission.marks !== null && submission.marks >= 0 ? (
                     <div>
-                        <p className="text-2xl font-bold text-green-700">{submission.marks}/{session.maxMarks ?? 'N/A'}</p>
-                        <p className="text-sm text-gray-600 mt-1">Status: Graded</p>
-                        {submission.feedback && <p className="text-sm mt-2 italic text-gray-700">Feedback: {submission.feedback}</p>}
+                        <p className="text-3xl font-extrabold text-green-700">{submission.marks}/{session.maxMarks ?? 'N/A'}</p>
+                        <p className="text-sm text-gray-600 mt-2">✓ Graded</p>
+                        {submission.feedback && <p className="text-sm mt-3 italic text-gray-700 bg-white p-3 rounded-lg">Feedback: {submission.feedback}</p>}
                     </div>
                 ) : (
                     <div>
-                        <p className="text-lg font-semibold text-yellow-700">Pending Review</p>
+                        <p className="text-xl font-bold text-yellow-700">⧗ Pending Review</p>
                         <p className="text-sm text-gray-600 mt-1">This submission has not been graded yet.</p>
                     </div>
                 )}
             </div>
 
-            <div className="bg-white p-4 rounded shadow space-y-3">
-                <h2 className="font-semibold">Grading</h2>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-purple-500 space-y-4">
+                <h2 className="text-xl font-bold text-gray-800">Grading</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium">Marks (Max: {session.maxMarks ?? 'N/A'})</label>
-                        <input type="number" value={marks} onChange={(e) => setMarks(e.target.value)} className="w-full border rounded p-2" />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Marks (Max: {session.maxMarks ?? 'N/A'})</label>
+                        <input type="number" value={marks} onChange={(e) => setMarks(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 transition" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium">Feedback</label>
-                        <input type="text" value={feedback} onChange={(e) => setFeedback(e.target.value)} className="w-full border rounded p-2" />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Feedback</label>
+                        <input type="text" value={feedback} onChange={(e) => setFeedback(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 transition" />
                     </div>
                 </div>
 
-                {error && <div className="text-sm text-red-700">{error}</div>}
+                {error && <div className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">{error}</div>}
 
-                <div className="pt-3">
-                    <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50">
-                        {saving ? 'Saving...' : 'Save Grade'}
+                <div className="pt-3 flex gap-3">
+                    <button onClick={handleSave} disabled={saving} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition shadow-md font-semibold">
+                        {saving ? 'Saving...' : '✓ Save Grade'}
+                    </button>
+                    <button onClick={() => navigate(-1)} className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition shadow-md font-semibold">
+                        ← Cancel
                     </button>
                 </div>
             </div>

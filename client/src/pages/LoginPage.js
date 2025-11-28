@@ -17,23 +17,23 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-200 p-4">
-            <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
-                <h1 className="text-3xl font-extrabold text-gray-900 text-center border-b pb-4">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100">
+                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center border-b border-gray-200 pb-4">
                     Digital Lab Records
                 </h1>
 
                 {/* Mode Selector (Tabs) */}
-                <div className="flex justify-around space-x-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex justify-around space-x-2 bg-gradient-to-r from-gray-100 to-gray-50 p-1 rounded-xl border border-gray-200">
                     <button
                         onClick={() => { setMode('login'); setAuthError(null); }}
-                        className={`w-1/2 p-2 rounded-lg font-semibold transition ${isLogin ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-700 hover:bg-white'}`}
+                        className={`w-1/2 p-3 rounded-lg font-semibold transition ${isLogin ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:text-gray-800'}`}
                     >
                         Login
                     </button>
                     <button
                         onClick={() => { setMode('register'); setAuthError(null); }}
-                        className={`w-1/2 p-2 rounded-lg font-semibold transition ${!isLogin ? 'bg-green-600 text-white shadow-md' : 'text-gray-700 hover:bg-white'}`}
+                        className={`w-1/2 p-3 rounded-lg font-semibold transition ${!isLogin ? 'bg-green-600 text-white shadow-md' : 'text-gray-600 hover:text-gray-800'}`}
                     >
                         Register
                     </button>
@@ -71,7 +71,7 @@ const LoginPage = () => {
 
                 {/* Error/Success Display */}
                 {authError && (
-                    <div className={`p-3 rounded-lg text-sm font-medium ${authError.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    <div className={`p-4 rounded-lg text-sm font-medium border-l-4 ${authError.type === 'error' ? 'bg-red-50 text-red-800 border-red-400' : 'bg-green-50 text-green-800 border-green-400'}`}>
                         {authError.text || 'An unknown error occurred.'} 
                     </div>
                 )}

@@ -25,14 +25,14 @@ const ErrorPage = () => {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-[60vh] bg-gray-100 p-4">
-            <div className="text-center bg-white p-10 rounded-xl shadow-2xl max-w-md space-y-6">
-                <p className="text-6xl mb-4">{emoji}</p>
-                <h1 className="text-4xl font-extrabold text-red-600">{title}</h1>
-                <p className="text-gray-700">{message}</p>
+        <div className="flex items-center justify-center min-h-[60vh] bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 p-4">
+            <div className="text-center bg-white p-10 rounded-2xl shadow-xl max-w-md space-y-6 border border-gray-100">
+                <p className="text-7xl mb-4 animate-pulse">{emoji}</p>
+                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">{title}</h1>
+                <p className="text-gray-700 text-lg">{message}</p>
                 <Link 
                     to="/login" 
-                    className="inline-block px-6 py-3 mt-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition"
+                    className="inline-block px-8 py-3 mt-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-md"
                 >
                     Go to Login Page
                 </Link>

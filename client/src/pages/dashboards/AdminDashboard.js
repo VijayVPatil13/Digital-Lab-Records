@@ -46,11 +46,11 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto p-4 space-y-6">
-            <h1 className="text-3xl font-bold text-indigo-700">Admin Dashboard</h1>
+        <div className="max-w-6xl mx-auto p-4 space-y-6 bg-gradient-to-br from-purple-50 to-indigo-50 min-h-screen rounded-xl">
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">Admin Dashboard</h1>
 
             {message && (
-                <div className={`p-3 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800'}`}>
+                <div className={`p-4 rounded-lg border-l-4 ${message.type === 'error' ? 'bg-red-50 text-red-800 border-red-400' : 'bg-green-50 text-green-800 border-green-400'}`}>
                     {message.text}
                 </div>
             )}
@@ -62,23 +62,25 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Faculty List */}
-                <div className="bg-white p-6 rounded shadow">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Registered Faculty</h2>
+                <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-purple-500">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-purple-500 pb-2">Registered Faculty</h2>
                     {loading ? (
-                        <p className="text-gray-500">Loading...</p>
+                        <p className="text-gray-500 italic">Loading...</p>
                     ) : faculties.length === 0 ? (
-                        <p className="text-gray-500">No faculty accounts registered yet.</p>
+                        <div className="bg-gray-50 p-6 rounded-lg text-center">
+                            <p className="text-gray-500 italic">No faculty accounts registered yet.</p>
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {faculties.map((faculty) => (
-                                <div key={faculty._id} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                                <div key={faculty._id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-md transition">
                                     <div>
-                                        <p className="font-medium text-gray-800">{faculty.firstName} {faculty.lastName}</p>
+                                        <p className="font-semibold text-gray-800">{faculty.firstName} {faculty.lastName}</p>
                                         <p className="text-sm text-gray-600">{faculty.email}</p>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteFaculty(faculty._id)}
-                                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition"
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition shadow-md"
                                     >
                                         Delete
                                     </button>

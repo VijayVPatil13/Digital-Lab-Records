@@ -56,21 +56,21 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
     
     // Display feedback section if graded
     const gradeDetails = lab.submissionDetails && (
-        <div className="p-4 bg-gray-100 rounded-lg space-y-2">
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg space-y-2 border-l-4 border-blue-500">
             <p className="font-semibold text-lg text-indigo-800">Grade: {lab.submissionDetails.marks} / {lab.maxMarks}</p>
-            <p className="text-sm">Feedback: {lab.submissionDetails.feedback || 'No feedback yet.'}</p>
-            <p className="text-xs text-gray-500">Submitted: {moment(lab.submissionDetails.submittedAt).format('MMM D, YYYY h:mm A')}</p>
+            <p className="text-sm text-gray-700">Feedback: {lab.submissionDetails.feedback || 'No feedback yet.'}</p>
+            <p className="text-xs text-gray-600">Submitted: {moment(lab.submissionDetails.submittedAt).format('MMM D, YYYY h:mm A')}</p>
         </div>
     );
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-600 space-y-4">
-            <h3 className="text-xl font-bold text-green-700">Lab Submission: {lab.title}</h3>
+        <div className="bg-white p-6 rounded-2xl shadow-lg border-t-4 border-green-500 space-y-4">
+            <h3 className="text-2xl font-bold text-gray-800">Lab Submission: {lab.title}</h3>
             
             {gradeDetails}
             
             {message && (
-                <div className={`p-3 rounded-lg text-sm font-medium ${message.type === 'error' ? 'bg-red-100 text-red-800' : message.type === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${message.type === 'error' ? 'bg-red-50 text-red-800 border-red-400' : message.type === 'warning' ? 'bg-yellow-50 text-yellow-800 border-yellow-400' : 'bg-green-50 text-green-800 border-green-400'}`}>
                     {message.text}
                 </div>
             )}
@@ -83,13 +83,13 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
                     rows="15" 
                     required
                     disabled={hasSubmitted || isSubmitting}
-                    className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm"
+                    className="w-full p-3 border border-gray-300 rounded-xl font-mono text-sm focus:ring-2 focus:ring-green-500 transition"
                 />
                 
                 <button
                     type="submit"
                     disabled={hasSubmitted || isSubmitting}
-                    className="w-full p-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                    className="w-full p-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-50 shadow-md"
                 >
                     {isSubmitting ? 'Submitting...' : hasSubmitted ? 'Submitted (Read-Only)' : 'Submit Lab Work'}
                 </button>
@@ -109,9 +109,9 @@ const LabSessionCard = ({ lab, isSelected, onClick }) => {
     return (
         <div 
             onClick={() => onClick(lab)}
-            className={`p-4 border rounded-lg cursor-pointer transition ${cardClass}`}
+            className={`p-4 border rounded-xl cursor-pointer transition shadow-md ${cardClass}`}
         >
-            <p className="font-bold">{lab.title}</p>
+            <p className="font-bold text-gray-800">{lab.title}</p>
             <p className="text-sm text-gray-600">Due: {moment(lab.date).format('MMM D, YYYY')}</p>
             <p className={`text-xs font-semibold ${statusColor}`}>{statusText}</p>
         </div>
@@ -155,18 +155,18 @@ const LabSubmission = () => {
     }, [fetchLabsAndSubmissions]);
 
     if (loading) return <LoadingSpinner />;
-    if (error) return <div className="p-4 bg-red-100 text-red-800 rounded max-w-7xl mx-auto">Error: {error}</div>;
+    if (error) return <div className="p-4 bg-red-50 text-red-800 rounded-lg max-w-7xl mx-auto border border-red-200">Error: {error}</div>;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6">
-            <h1 className="text-3xl font-extrabold text-green-700 border-b pb-3">
-                Lab Submissions for: {course?.name} ({courseId})
+        <div className="max-w-7xl mx-auto space-y-6 p-4 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen rounded-xl">
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                Lab Submissions for: <span className="text-green-700">{course?.name}</span> ({courseId})
             </h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 <div className="lg:col-span-1 space-y-4">
-                    <h2 className="text-2xl font-bold text-gray-800">Lab Sessions</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-green-500 pb-2">Lab Sessions</h2>
                     {labs.map((lab) => (
                         <LabSessionCard 
                             key={lab._id} 
