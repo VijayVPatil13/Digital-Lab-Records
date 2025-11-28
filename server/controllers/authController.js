@@ -17,9 +17,9 @@ exports.registerUser = asyncHandler(async (req, res) => {
     if (!fullName || !email || !password || !role) {
         return res.status(400).json({ message: 'Please enter all fields.' });
     }
-    // Security check: Only allow public registration for specific roles
-    if (!['Faculty', 'Student'].includes(role)) {
-        return res.status(403).json({ message: 'Admin accounts cannot be registered publicly.' });
+    // Security check: Only allow public registration for Students now
+    if (!['Student'].includes(role)) {
+        return res.status(403).json({ message: 'Only Student accounts can be registered publicly. Faculty/Admin accounts must be created by an administrator.' });
     }
 
     try {
@@ -63,6 +63,56 @@ exports.registerUser = asyncHandler(async (req, res) => {
         const message = error.errors ? 'Validation failed: Check required fields.' : 'Server error during registration. Check logs.';
         res.status(500).json({ message });
     }
+});
+
+// Admin login using hard-coded credentials (creates admin user on first login)
+exports.adminLogin = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const ADMIN_EMAIL = 'admin@dlr.com';
+    const ADMIN_PASSWORD = 'admin.dlr';
+
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: 'Invalid admin credentials.' });
+    }
+
+    // Ensure admin user exists in DB
+    let adminUser = await User.findOne({ email: ADMIN_EMAIL });
+    if (!adminUser) {
+        const names = 'Admin DLR'.split(' ');
+        adminUser = await User.create({
+            firstName: names[0],
+            lastName: names.slice(1).join(' '),
+            email: ADMIN_EMAIL,
+            passwordHash: ADMIN_PASSWORD,
+            role: 'Admin'
+        });
+    }
+
+    res.json({
+        user: { id: adminUser._id, fullName: adminUser.fullName, email: adminUser.email, role: adminUser.role },
+        token: generateToken(adminUser._id, adminUser.role, adminUser.fullName),
+        message: 'Admin login successful.'
+    });
+});
+
+// Admin-only: register another admin
+exports.registerAdmin = asyncHandler(async (req, res) => {
+    const { fullName, email, password } = req.body;
+
+    if (!fullName || !email || !password) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'User already exists.' });
+
+    const names = fullName.trim().split(/\s+/);
+    const firstName = names[0] || 'Admin';
+    const lastName = names.length > 1 ? names.slice(1).join(' ') : 'Admin';
+
+    const newAdmin = await User.create({ firstName, lastName, email, passwordHash: password, role: 'Admin' });
+
+    res.status(201).json({ user: { id: newAdmin._id, fullName: newAdmin.fullName, email: newAdmin.email, role: newAdmin.role }, message: 'Admin account created.' });
 });
 
 exports.loginUser = asyncHandler(async (req, res) => {
