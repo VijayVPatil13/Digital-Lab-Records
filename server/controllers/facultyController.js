@@ -151,14 +151,35 @@ exports.updateEnrollmentStatus = asyncHandler(async (req, res) => {
         throw new Error('Not authorized or request not found.');
     }
 
+    const previousStatus = enrollment.status;
     enrollment.status = status;
     const updatedEnrollment = await enrollment.save();
 
-    if (status === 'approved') {
+    // If transitioning to approved, add student to course and user's enrolledCourses
+    if (previousStatus !== 'approved' && status === 'approved') {
         await Course.findByIdAndUpdate(
             enrollment.course._id,
             { $addToSet: { students: enrollment.student } },
             { new: true }
+        );
+
+        await User.findByIdAndUpdate(
+            enrollment.student,
+            { $addToSet: { enrolledCourses: enrollment.course._id } }
+        );
+    }
+
+    // If previously approved and now changed away from approved, remove from course and user's enrolledCourses
+    if (previousStatus === 'approved' && status !== 'approved') {
+        await Course.findByIdAndUpdate(
+            enrollment.course._id,
+            { $pull: { students: enrollment.student } },
+            { new: true }
+        );
+
+        await User.findByIdAndUpdate(
+            enrollment.student,
+            { $pull: { enrolledCourses: enrollment.course._id } }
         );
     }
 
