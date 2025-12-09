@@ -18,6 +18,17 @@ const SessionManager = () => {
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
 
+    useEffect(() => {
+        if (!message) return;
+
+        const timer = setTimeout(() => {
+            setMessage(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [message]);
+
+
     const fetchSessions = useCallback(async () => {
         setLoading(true);
         try {
@@ -40,6 +51,18 @@ const SessionManager = () => {
     const handleNewSessionSuccess = (msg) => {
         setMessage({ type: 'success', text: msg });
         fetchSessions();
+
+        //After 3 seconds → go back to "All Sessions" tab
+        setTimeout(() => {
+            setMessage(null);
+
+            // Force tab switch by reloading tab container via key
+            const listTabBtn = document.querySelector('[data-tab="list"]');
+            if (listTabBtn) {
+                listTabBtn.click();
+            }
+
+        }, 3000);
     };
 
     const handleReviewClick = (sessionId) => {

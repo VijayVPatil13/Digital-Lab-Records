@@ -21,10 +21,16 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // ✅ EMAIL VALIDATION FUNCTION
+    // EMAIL VALIDATION FUNCTION
     const isValidEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.(com|net|org|edu)$/i;
         return emailRegex.test(email);
+    };
+
+    // FULL NAME VALIDATION FUNCTION (First + Last Name)
+    const isValidFullName = (name) => {
+        const parts = name.trim().split(/\s+/);
+        return parts.length >= 2;
     };
 
     const handleSubmit = async (e) => {
@@ -32,13 +38,21 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         onError(null);
         setIsSubmitting(true);
 
-        // ✅ EMAIL VALIDATION CHECK
-        if (!isValidEmail(formData.email)) {
-            onError({ type: 'error', text: 'Enter valid email' });
+        //FULL NAME VALIDATION
+        if (!isValidFullName(formData.fullName)) {
+            onError({ type: 'error', text: 'Please enter first name and last name' });
             setIsSubmitting(false);
             return;
         }
 
+        //EMAIL VALIDATION
+        if (!isValidEmail(formData.email)) {
+            onError({ type: 'error', text: 'Please enter valid email' });
+            setIsSubmitting(false);
+            return;
+        }
+
+        //ROLE VALIDATION
         if (formData.role === 'Admin') {
             onError({ type: 'error', text: 'Admin accounts must be created directly by an administrator.' });
             setIsSubmitting(false);

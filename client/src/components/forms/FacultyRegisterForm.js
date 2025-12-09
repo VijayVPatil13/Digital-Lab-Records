@@ -14,10 +14,16 @@ const FacultyRegisterForm = ({ onSuccess, onError }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // ✅ EMAIL VALIDATION FUNCTION
+    //EMAIL VALIDATION FUNCTION
     const isValidEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.(com|net|org|edu)$/i;
         return emailRegex.test(email);
+    };
+
+    //FULL NAME VALIDATION FUNCTION (Requires First + Last Name)
+    const isValidFullName = (name) => {
+        const parts = name.trim().split(/\s+/);
+        return parts.length >= 2;
     };
 
     const handleSubmit = async (e) => {
@@ -25,9 +31,18 @@ const FacultyRegisterForm = ({ onSuccess, onError }) => {
         if (onError) onError(null);
         setIsSubmitting(true);
 
-        // ✅ EMAIL VALIDATION CHECK
+        //FULL NAME VALIDATION CHECK
+        if (!isValidFullName(formData.fullName)) {
+            if (onError) {
+                onError({ type: 'error', text: 'Please enter first name and last name' });
+            }
+            setIsSubmitting(false);
+            return;
+        }
+
+        //EMAIL VALIDATION CHECK
         if (!isValidEmail(formData.email)) {
-            if (onError) onError({ type: 'error', text: 'Enter valid email' });
+            if (onError) onError({ type: 'error', text: 'Please enter valid email' });
             setIsSubmitting(false);
             return;
         }
@@ -45,12 +60,21 @@ const FacultyRegisterForm = ({ onSuccess, onError }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-2xl shadow-lg border-t-4 border-purple-500">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Register Faculty Account</h2>
-            <p className="text-gray-600 text-sm mb-4">Create a new faculty account for the system.</p>
+        <form
+            onSubmit={handleSubmit}
+            className="space-y-4 bg-white p-6 rounded-2xl shadow-lg border-t-4 border-purple-500"
+        >
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Register Faculty Account
+            </h2>
+            <p className="text-gray-600 text-sm mb-4">
+                Create a new faculty account for the system.
+            </p>
 
             <div>
-                <label className="block text-gray-700 font-semibold mb-2">Full Name</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                    Full Name
+                </label>
                 <input
                     type="text"
                     name="fullName"
@@ -62,7 +86,9 @@ const FacultyRegisterForm = ({ onSuccess, onError }) => {
             </div>
 
             <div>
-                <label className="block text-gray-700 font-semibold mb-2">Email</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                    Email
+                </label>
                 <input
                     type="email"
                     name="email"
@@ -74,7 +100,9 @@ const FacultyRegisterForm = ({ onSuccess, onError }) => {
             </div>
 
             <div>
-                <label className="block text-gray-700 font-semibold mb-2">Password</label>
+                <label className="block text-gray-700 font-semibold mb-2">
+                    Password
+                </label>
                 <input
                     type="password"
                     name="password"

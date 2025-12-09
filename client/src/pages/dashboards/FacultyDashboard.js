@@ -44,6 +44,17 @@ const FacultyDashboard = () => {
     fetchCourses();
   }, [fetchCourses]);
 
+  useEffect(() => {
+    if (!message) return;
+
+    const timer = setTimeout(() => {
+      setMessage(null);
+    }, 3000); // 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [message]);
+
+
   const handleCreateCourse = async (courseData) => {
     setMessage(null);
 
@@ -81,10 +92,10 @@ const FacultyDashboard = () => {
       </h1>
 
       <p className="text-lg text-gray-700 font-medium">
-        Welcome, <span className="text-indigo-600 font-bold">{fullName || 'Faculty'}</span>. Manage your courses and pending enrollments.
+        Welcome, <span className="text-indigo-600 font-bold">{fullName}</span>. Manage your courses and pending enrollments.
       </p>
 
-      {/* 🛑 FIX: Ensure the EnrollmentApproval component is rendered here */}
+      
       <div className="py-4">
         <EnrollmentApproval onActionProcessed={fetchCourses} /> 
       </div>

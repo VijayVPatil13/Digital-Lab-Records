@@ -14,9 +14,13 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
     // submissionDetails is always present in the API response; check submissionId to know if an actual submission exists
     const hasSubmitted = !!lab.submissionDetails?.submissionId;
     
-    // Check if current time exceeds endTime
+    // Time-based restrictions
+    const isBeforeStart = lab.startTime && moment().isBefore(moment(lab.startTime));
     const isSessionExpired = lab.endTime && moment().isAfter(moment(lab.endTime));
-    const isFormDisabled = hasSubmitted || isSubmitting || isSessionExpired; 
+
+    // Final form disable condition
+    const isFormDisabled = hasSubmitted || isSubmitting || isSessionExpired || isBeforeStart;
+
 
     useEffect(() => {
         setCode(lab.submissionDetails?.submittedCode || '');
@@ -28,6 +32,12 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
         setIsSubmitting(true);
         setMessage(null);
         onError(null);
+
+        if (isBeforeStart) {
+            setMessage({ type: 'error', text: 'Submission is not allowed before lab start time.' });
+            setIsSubmitting(false);
+            return;
+        }
         
         try {
             if (hasSubmitted) {
@@ -56,11 +66,26 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
         }
     };
     
-    const gradeDetails = lab.submissionDetails && (
+    const hasRealSubmission = !!lab.submissionDetails?.submissionId;
+
+    const gradeDetails = hasRealSubmission && (
         <div className="p-4 bg-gray-100 rounded-lg space-y-2">
-            <p className="font-semibold text-lg text-indigo-800">Grade: {lab.submissionDetails.marks} / {lab.maxMarks}</p>
-            <p className="text-sm">Feedback: {lab.submissionDetails.feedback || 'No feedback yet.'}</p>
-            <p className="text-xs text-gray-500">Submitted: {moment(lab.submissionDetails.submittedAt).format('MMM D, YYYY h:mm A')}</p>
+            
+            {lab.submissionDetails.marks !== null && (
+                <p className="font-semibold text-lg text-indigo-800">
+                    Grade: {lab.submissionDetails.marks} / {lab.maxMarks}
+                </p>
+            )}
+
+            <p className="text-sm">
+                Feedback: {lab.submissionDetails.feedback || 'No feedback yet.'}
+            </p>
+
+            {lab.submissionDetails.submittedAt && (
+                <p className="text-xs text-gray-500">
+                    Submitted: {moment(lab.submissionDetails.submittedAt).format('MMM D, YYYY h:mm A')}
+                </p>
+            )}
         </div>
     );
 
@@ -74,6 +99,13 @@ const SubmissionBox = ({ lab, onSubmissionSuccess, onError }) => {
             {!isSubmissionOpen && (
                 <div className="p-4 bg-red-50 text-red-800 rounded-lg font-semibold border-l-4 border-red-400">
                     Submissions are currently closed by the instructor.
+                </div>
+            )}
+
+            {isBeforeStart && (
+                <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg font-semibold border-l-4 border-yellow-400">
+                    This lab has not started yet. Submissions will open at{" "}
+                    {moment(lab.startTime).format('MMM D, YYYY h:mm A')}.
                 </div>
             )}
 

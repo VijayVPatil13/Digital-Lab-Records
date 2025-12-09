@@ -79,7 +79,12 @@ const EnrollmentApproval = ({ onActionProcessed }) => {
                 {requests.map((req) => (
                     <li key={req._id} className="p-3 border-b flex justify-between items-center bg-white rounded-md shadow-sm">
                         <div className="text-sm">
-                            <p className="font-medium text-gray-800">{req.student.fullName} ({req.student.email})</p>
+                            <p className="font-medium text-gray-800">
+                                {req.student?.firstName && req.student?.lastName 
+                                    ? `${req.student.firstName} ${req.student.lastName}`
+                                    : req.student?.email}                                
+                            </p>
+
                             <p className="text-xs text-gray-500">Course: {req.course.code} - {req.course.name}</p>
                         </div>
                         <div className="space-x-2 flex items-center">

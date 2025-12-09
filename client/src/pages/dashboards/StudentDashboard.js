@@ -26,8 +26,7 @@ const StudentDashboard = () => {
 
     setLoading(true);
     try {
-      // ✅ CORRECT ENDPOINT: GET to /api/student/courses/enrolled 
-      // This is the correct, student-role-restricted endpoint.
+
       const response = await api.get(`/student/courses/enrolled`); 
       
       setCourses(response.data.courses || []);
@@ -53,6 +52,17 @@ const StudentDashboard = () => {
   useEffect(() => {
     fetchEnrolledCourses();
   }, [fetchEnrolledCourses]);
+
+  useEffect(() => {
+    if (!message) return;
+
+    const timer = setTimeout(() => {
+      setMessage(null);
+    }, 3000); // 3 seconds
+
+    return () => clearTimeout(timer);
+  }, [message]);
+
 
   const handleJoinCourse = async (e) => {
     e.preventDefault();

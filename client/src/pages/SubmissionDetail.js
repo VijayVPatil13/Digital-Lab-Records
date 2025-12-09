@@ -20,7 +20,7 @@ const SubmissionDetail = () => {
         try {
             const res = await api.get(`/submissions/id/${submissionId}`);
             setSubmission(res.data.submission);
-            setMarks(res.data.submission.marks ?? '');
+            setMarks(res.data.submission.isReviewed ? res.data.submission.marks : '');
             setFeedback(res.data.submission.feedback ?? '');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to load submission.');
@@ -32,26 +32,47 @@ const SubmissionDetail = () => {
     useEffect(() => { fetchSubmission(); }, [fetchSubmission]);
 
     const handleSave = async () => {
-        if (marks === '' || isNaN(marks)) {
-            setError('Please enter valid marks.');
+        if (marks === '' && feedback.trim() === '') {
+            return; 
+        }
+
+        if (marks !== '' && isNaN(marks)) {
+            setError('Please enter valid numeric marks.');
             return;
         }
-        const numericMarks = parseFloat(marks);
-        if (submission.session && submission.session.maxMarks && (numericMarks < 0 || numericMarks > submission.session.maxMarks)) {
+
+        if (marks === '') {
+            return; 
+        }
+
+        const numericMarks = marks !== '' ? parseFloat(marks) : null;
+
+        if (
+            numericMarks !== null &&
+            submission.session &&
+            submission.session.maxMarks &&
+            (numericMarks < 0 || numericMarks > submission.session.maxMarks)
+        ) {
             setError(`Marks must be between 0 and ${submission.session.maxMarks}`);
             return;
         }
 
         setSaving(true);
         setError(null);
+
         try {
-            const res = await api.put(`/submissions/grade/${submission._id}`, { marks: numericMarks, feedback });
+            const res = await api.put(`/submissions/grade/${submission._id}`, { 
+                marks: numericMarks, 
+                feedback 
+            });
+
             setSubmission(res.data.submission);
-            setError(null);
-            // After saving, navigate back to the session review and pass updated submission in state
+
             const sessionId = res.data.submission.session;
-            navigate(`/faculty/session/${sessionId}/review`, { state: { updatedSubmission: res.data.submission } });
-            return;
+            navigate(`/faculty/session/${sessionId}/review`, {
+                state: { updatedSubmission: res.data.submission }
+            });
+
         } catch (err) {
             setError(err.response?.data?.message || 'Error saving grade.');
         } finally {
@@ -59,13 +80,22 @@ const SubmissionDetail = () => {
         }
     };
 
+
+    const handleClear = () => {
+        setMarks('');
+        setFeedback('');
+        setError(null);
+    };
+
+
     if (loading) return <LoadingSpinner />;
-    if (error) return <div className="p-4 bg-red-50 text-red-800 rounded-lg max-w-4xl mx-auto border border-red-200">Error: {error}</div>;
     if (!submission) return <div className="p-4 text-gray-600">Submission not found.</div>;
 
     const student = submission.student || {};
     const session = submission.session || {};
     const course = session.course || submission.course || {};
+
+    const isSaveDisabled = marks === '';
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen rounded-xl">
@@ -93,12 +123,12 @@ const SubmissionDetail = () => {
             </div>
 
             <div className={`p-6 rounded-2xl shadow-lg border-t-4 ${
-                submission.marks !== undefined && submission.marks !== null && submission.marks >= 0
+                submission.marks !== undefined && submission.marks !== null && submission.isReviewed
                     ? 'bg-green-50 border-green-500'
                     : 'bg-yellow-50 border-yellow-500'
             }`}>
                 <h2 className="font-bold text-lg mb-3 text-gray-800">Grade Status</h2>
-                {submission.marks !== undefined && submission.marks !== null && submission.marks >= 0 ? (
+                {submission.marks !== undefined && submission.marks !== null && submission.marks > 0 ? (
                     <div>
                         <p className="text-3xl font-extrabold text-green-700">{submission.marks}/{session.maxMarks ?? 'N/A'}</p>
                         <p className="text-sm text-gray-600 mt-2">✓ Graded</p>
@@ -128,12 +158,14 @@ const SubmissionDetail = () => {
                 {error && <div className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">{error}</div>}
 
                 <div className="pt-3 flex gap-3">
-                    <button onClick={handleSave} disabled={saving} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition shadow-md font-semibold">
+                    <button onClick={handleSave} disabled={saving || isSaveDisabled} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md font-semibold">
                         {saving ? 'Saving...' : '✓ Save Grade'}
                     </button>
-                    <button onClick={() => navigate(-1)} className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition shadow-md font-semibold">
-                        ← Cancel
+
+                    <button type="button" onClick={handleClear} className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition shadow-md font-semibold">
+                        ✕ Clear
                     </button>
+
                 </div>
             </div>
         </div>

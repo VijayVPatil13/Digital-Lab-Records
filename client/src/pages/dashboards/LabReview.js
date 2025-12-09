@@ -1,44 +1,76 @@
 // client/src/pages/dashboards/LabReview.js
-import React, { useState } from 'react';
-import FacultyReviewModal from '../../components/role-specific/FacultyReviewModal';
+import React, { useState, useEffect } from 'react';
+import FacultyReviewModal from '../../components/role-specific/FacultyReviewModel';
 
 const mockSubmissions = [
-  { id: 1, student: 'Alice Smith', lab: 'Titration 1', text: 'The titration result was very precise...', grade: null },
-  { id: 2, student: 'Bob Johnson', lab: 'Spectroscopy', text: 'I observed absorption at 450nm and 600nm...', grade: 'A-' },
+  { id: 1, student: 'Alice Smith', lab: 'Titration 1', text: 'The titration result was very precise...' },
+  { id: 2, student: 'Bob Johnson', lab: 'Spectroscopy', text: 'I observed absorption at 450nm and 600nm...' },
 ];
 
 const LabReview = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+
   
+  const [gradedMap, setGradedMap] = useState({});
+
+  
+  useEffect(() => {
+    setGradedMap({});
+  }, []);
+
+  const handleReviewSubmit = (id) => {
+    setGradedMap(prev => ({
+      ...prev,
+      [id]: true
+    }));
+    setSelectedSubmission(null);
+  };
+
   return (
     <div className="space-y-6 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 min-h-screen rounded-xl max-w-7xl mx-auto">
-      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">Pending Lab Submissions</h1>
-      <p className="text-gray-700 font-medium">Select a submission to grade and provide feedback.</p>
-      
+      <h1 className="text-4xl font-extrabold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">
+        Pending Lab Submissions
+      </h1>
+      <p className="text-gray-700 font-medium">
+        Select a submission to grade and provide feedback.
+      </p>
+
       <div className="bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
         {mockSubmissions.map(sub => (
-          <div key={sub.id} className="flex justify-between items-center p-4 border-b hover:bg-gray-50 transition">
+          <div
+            key={sub.id}
+            className="flex justify-between items-center p-4 border-b hover:bg-gray-50 transition"
+          >
             <div>
-              <p className="font-semibold text-gray-800">{sub.lab} - {sub.student}</p>
-              <p className="text-sm text-gray-600">{sub.text.substring(0, 70)}...</p>
+              <p className="font-semibold text-gray-800">
+                {sub.lab} - {sub.student}
+              </p>
+              <p className="text-sm text-gray-600">
+                {sub.text.substring(0, 70)}...
+              </p>
             </div>
-            {sub.grade ? (
-                <span className="text-sm text-green-600 font-bold bg-green-50 px-3 py-1 rounded-lg">Graded ({sub.grade})</span>
+
+           
+            {gradedMap[sub.id] === true ? (
+              <span className="text-sm text-green-600 font-bold bg-green-50 px-3 py-1 rounded-lg">
+                Graded
+              </span>
             ) : (
-                <button 
-                  onClick={() => setSelectedSubmission(sub)}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-700 transition shadow-md"
-                >
-                  Review
-                </button>
+              <button 
+                onClick={() => setSelectedSubmission(sub)}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-yellow-700 transition shadow-md"
+              >
+                Review
+              </button>
             )}
           </div>
         ))}
       </div>
 
-      <FacultyReviewModal 
-        submission={selectedSubmission} 
+      <FacultyReviewModal
+        submission={selectedSubmission}
         onClose={() => setSelectedSubmission(null)}
+        onSubmit={handleReviewSubmit}
       />
     </div>
   );
