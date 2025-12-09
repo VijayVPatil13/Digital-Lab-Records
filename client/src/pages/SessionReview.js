@@ -14,11 +14,17 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
         // Initialize grades state from fetched submission data
         const initialGrades = {};
         studentData.forEach(item => {
+            const submission = item.submission || {};
+            const marksVal = submission.marks ?? '';
+            // use explicit isReviewed flag from backend to know if faculty graded it
+            const isGraded = !!submission.isReviewed;
+
             initialGrades[item.student._id] = {
-                marks: item.submission.marks || 0,
-                feedback: item.submission.feedback || '',
-                submissionId: item.submission._id,
-                hasSubmitted: item.hasSubmitted,
+                marks: marksVal,
+                feedback: submission.feedback || '',
+                submissionId: submission._id,
+                hasSubmitted: !!item.hasSubmitted,
+                isGraded,
                 isSubmitting: false,
             };
         });
@@ -34,13 +40,19 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
 
     const handleGradeSubmission = async (studentId) => {
         const gradeInfo = grades[studentId];
-        
+
         if (!gradeInfo.hasSubmitted || !gradeInfo.submissionId) {
             setMessage({ type: 'error', text: `Student has no submission to grade.` });
             return;
         }
 
-        if (gradeInfo.marks < 0 || gradeInfo.marks > session.maxMarks) {
+        const numericMarks = parseFloat(gradeInfo.marks);
+        if (isNaN(numericMarks)) {
+            setMessage({ type: 'error', text: 'Please enter numeric marks.' });
+            return;
+        }
+
+        if (numericMarks < 0 || numericMarks > session.maxMarks) {
             setMessage({ type: 'error', text: `Marks must be between 0 and ${session.maxMarks}.` });
             return;
         }
@@ -51,15 +63,27 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
         try {
             // PUT to /api/submissions/grade/:submissionId
             const response = await api.put(`/submissions/grade/${gradeInfo.submissionId}`, {
-                marks: parseFloat(gradeInfo.marks),
+                marks: numericMarks,
                 feedback: gradeInfo.feedback
             });
+
+            // update UI state
             setMessage({ type: 'success', text: `Grade saved for ${studentData.find(s => s.student._id === studentId).student.fullName}.` });
             onGrade(studentId, response.data.submission);
 
+            setGrades(prev => ({
+                ...prev,
+                [studentId]: {
+                    ...prev[studentId],
+                    marks: response.data.submission.marks,
+                    feedback: response.data.submission.feedback || '',
+                    isGraded: true,
+                    isSubmitting: false,
+                }
+            }));
+
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Error saving grade.' });
-        } finally {
             setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], isSubmitting: false } }));
         }
     };
@@ -93,9 +117,16 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
                                         {item.student.fullName}
                                     </td>
                                     <td className="px-6 py-4 text-sm">
-                                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${item.hasSubmitted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                            {item.hasSubmitted ? '✓ Submitted' : '⧗ Pending'}
-                                        </span>
+                                        {(() => {
+                                            const status = gradeInfo.isGraded ? 'graded' : gradeInfo.hasSubmitted ? 'submitted' : 'pending';
+                                            const cls = status === 'graded' ? 'bg-green-100 text-green-800' : status === 'submitted' ? 'bg-indigo-100 text-indigo-800' : 'bg-yellow-100 text-yellow-800';
+                                            const text = status === 'graded' ? 'Graded' : status === 'submitted' ? 'Submitted' : 'Pending';
+                                            return (
+                                                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>
+                                                    {text}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                     <td className="px-6 py-4 text-sm">
                                         <input

@@ -34,7 +34,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
         
         // CRITICAL FIX: If only one name is provided (names.length <= 1), 
         // use 'User' as a placeholder for lastName to satisfy the Mongoose required validation.
-        const lastName = names.length > 1 ? names.slice(1).join(' ') : 'User'; 
+        const lastName = names.length > 1 ? names.slice(1).join(' ') : ''; 
         // -------------------------------------------------------------------------------------
 
         const newUser = await User.create({ 

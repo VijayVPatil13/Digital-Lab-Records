@@ -105,7 +105,9 @@ router.put('/grade/:submissionId', protect, restrictTo('Faculty'), async (req, r
         
         submission.marks = marks;
         submission.feedback = feedback;
-        
+        // mark as reviewed so frontend can distinguish default 0 from graded 0
+        submission.isReviewed = true;
+
         await submission.save();
 
         res.json({ message: 'Submission graded successfully.', submission });

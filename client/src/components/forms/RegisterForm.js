@@ -12,19 +12,33 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         fullName: '',
         email: '',
         password: '',
-        role: 'Student' // Default to Student
+        role: 'Student'
     });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // ✅ EMAIL VALIDATION FUNCTION
+    const isValidEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.(com|net|org|edu)$/i;
+        return emailRegex.test(email);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         onError(null);
         setIsSubmitting(true);
-        
+
+        // ✅ EMAIL VALIDATION CHECK
+        if (!isValidEmail(formData.email)) {
+            onError({ type: 'error', text: 'Enter valid email' });
+            setIsSubmitting(false);
+            return;
+        }
+
         if (formData.role === 'Admin') {
             onError({ type: 'error', text: 'Admin accounts must be created directly by an administrator.' });
             setIsSubmitting(false);
@@ -39,15 +53,13 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
                 role: formData.role
             });
 
-            // Log the user in immediately using the returned token
             login(response.data.token, response.data.user);
-            
-            // Redirect to the appropriate dashboard
+
             const role = response.data.user.role.toLowerCase();
             navigate(`/${role}/dashboard`, { replace: true });
-            
+
             if (onSignupSuccess) onSignupSuccess();
-            
+
         } catch (error) {
             const msg = error.response?.data?.message || 'Server error during registration.';
             onError({ type: 'error', text: msg });
@@ -60,25 +72,60 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Full Name</label>
-                <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className="w-full p-3 border rounded-lg" />
+                <input 
+                    type="text" 
+                    name="fullName" 
+                    value={formData.fullName} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-3 border rounded-lg" 
+                />
             </div>
+
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Email</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-3 border rounded-lg" />
+                <input 
+                    type="email" 
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-3 border rounded-lg" 
+                />
             </div>
+
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Password</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full p-3 border rounded-lg" />
+                <input 
+                    type="password" 
+                    name="password" 
+                    value={formData.password} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-3 border rounded-lg" 
+                />
             </div>
+
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Role</label>
-                <select name="role" value={formData.role} onChange={handleChange} required className="w-full p-3 border rounded-lg">
+                <select 
+                    name="role" 
+                    value={formData.role} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-3 border rounded-lg"
+                >
                     <option value="Student">Student</option>
                 </select>
             </div>
+
             <button
                 type="submit"
-                className={`w-full p-3 rounded-lg font-semibold transition ${isSubmitting ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white`}
+                className={`w-full p-3 rounded-lg font-semibold transition ${
+                    isSubmitting 
+                    ? 'bg-green-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700'
+                } text-white`}
                 disabled={isSubmitting}
             >
                 {isSubmitting ? 'Registering...' : 'Register & Login'}
