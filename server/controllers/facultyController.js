@@ -44,18 +44,27 @@ exports.createCourse = asyncHandler(async (req, res) => {
         throw new Error('Course Name and Code are required.');
     }
 
-    const courseExists = await Course.findOne({ code: code.toUpperCase() });
+    const normalizedCode = code.toUpperCase();
+    const normalizedSection = (section || 'A').toUpperCase();
+
+    const courseExists = await Course.findOne({
+        code: normalizedCode,
+        section: normalizedSection
+    });
+
     if (courseExists) {
         res.status(400);
-        throw new Error(`Course with code ${code} already exists.`);
+        throw new Error(
+            `Course with code ${normalizedCode} and section ${normalizedSection} already exists.`
+        );
     }
     
     const newCourse = await Course.create({
         name,
-        code: code.toUpperCase(),
-        section: section || 'A',
+        code: normalizedCode,
+        section: normalizedSection,
         description,
-        faculty: facultyId, // Assigns the course to the logged-in faculty
+        faculty: facultyId,
     });
     
     // Populate faculty data before returning
@@ -129,7 +138,7 @@ exports.getPendingEnrollments = asyncHandler(async (req, res) => {
         course: { $in: courseIds }, 
         status: 'pending' 
     })
-    .populate('student', 'fullName email') 
+    .populate('student', 'firstName lastName email') 
     .populate('course', 'name code')
     .lean();
     

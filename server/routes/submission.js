@@ -1,7 +1,6 @@
 // server/routes/submission.js
 const express = require('express');
 const router = express.Router();
-// --- CRITICAL FIX: Use simple require if 'protect' is the default export ---
 const protect = require('../middleware/auth.js'); 
 const { restrictTo } = require('../middleware/roles.js'); // Assuming named export here
 const Submission = require('../models/Submission.js');

@@ -70,7 +70,10 @@ router.get('/review/:sessionId', protect, restrictTo('Faculty'), async (req, res
             const submission = submissions.find(sub => sub.student._id.toString() === student._id.toString());
             return {
                 student: student,
-                submission: submission ? submission.toObject() : { submittedCode: 'N/A', marks: 0, feedback: '' },
+                submission: submission 
+                    ? submission.toObject() 
+                    : { submittedCode: 'N/A', marks: null, feedback: '', isReviewed: false },
+
                 hasSubmitted: !!submission,
             };
         });
