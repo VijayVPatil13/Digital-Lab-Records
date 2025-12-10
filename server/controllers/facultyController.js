@@ -10,27 +10,43 @@ const User = require('../models/User');
 // @route   GET /api/faculty/courses/taught
 // @access  Private (Faculty)
 exports.getMyCourses = asyncHandler(async (req, res) => {
-    const facultyId = req.user.id; 
+    const facultyId = req.user.id;
 
     const courses = await Course.find({ faculty: facultyId })
         .populate('faculty', 'firstName lastName')
-        .populate('students', 'fullName email');
-    
+        .lean();
+
+    const courseIds = courses.map(c => c._id);
+
+    // ✅ SECTION-WISE STUDENT COUNT FROM ENROLLMENT
+    const enrollments = await Enrollment.find({
+        course: { $in: courseIds },
+        status: 'approved'
+    });
+
     const formattedCourses = courses.map(course => {
-        const courseObj = course.toObject();
-        const faculty = courseObj.faculty;
-        const instructorName = faculty && faculty.firstName ? `${faculty.firstName} ${faculty.lastName || ''}`.trim() : req.user.fullName;
-        
+        const faculty = course.faculty;
+        const instructorName =
+            faculty && faculty.firstName
+                ? `${faculty.firstName} ${faculty.lastName || ''}`.trim()
+                : req.user.fullName;
+
+        const sectionStudents = enrollments.filter(
+            e =>
+                e.course.toString() === course._id.toString() &&
+                e.section === course.section
+        );
+
         return {
-            ...courseObj,
-            faculty: faculty,
-            instructorName: instructorName,
-            studentsCount: courseObj.students ? courseObj.students.length : 0
+            ...course,
+            instructorName,
+            studentsCount: sectionStudents.length   // ✅ CORRECT COUNT PER SECTION
         };
     });
 
     res.json({ courses: formattedCourses });
 });
+
 
 // @desc    Create a new Course and assign faculty (Moved to Faculty Controller)
 // @route   POST /api/faculty/courses
@@ -82,31 +98,54 @@ exports.createCourse = asyncHandler(async (req, res) => {
 // @route   POST /api/faculty/sessions
 // @access  Private (Faculty)
 exports.createLabSession = asyncHandler(async (req, res) => {
-    const { courseCode, title, date, startTime, endTime, description, maxMarks } = req.body;
-    const facultyId = req.user.id;
+  const { courseCode, section, title, date, startTime, endTime, description, maxMarks } = req.body;
+  const facultyId = req.user.id;
 
-    const course = await Course.findOne({ code: courseCode.toUpperCase(), faculty: facultyId });
-    if (!course) {
-        res.status(404);
-        throw new Error(`Course ${courseCode} not found or not assigned to this faculty.`);
-    }
+  if (!courseCode || !section) {
+    res.status(400);
+    throw new Error('Course code and section are required.');
+  }
 
-    const enrolledStudents = await Enrollment.find({ course: course._id, status: 'approved' }).select('student');
-    const initialAttendance = enrolledStudents.map(e => e.student); 
-    
-    const newSession = await LabSession.create({
-        course: course._id,
-        title,
-        date,
-        startTime,
-        endTime,
-        description,
-        maxMarks,
-        attendance: initialAttendance,
-    });
-    
-    res.status(201).json({ message: 'Lab session created successfully.', session: newSession });
+  const normalizedCode = courseCode.toUpperCase().trim();
+  const normalizedSection = section.toUpperCase().trim();
+
+  const course = await Course.findOne({
+    code: normalizedCode,
+    section: normalizedSection,
+    faculty: facultyId
+  });
+
+  if (!course) {
+    res.status(404);
+    throw new Error(`Course ${normalizedCode} - Section ${normalizedSection} not found.`);
+  }
+
+  const enrolledStudents = await Enrollment.find({
+    course: course._id,
+    section: normalizedSection,
+    status: 'approved'
+  }).select('student');
+
+  const initialAttendance = enrolledStudents.map(e => e.student);
+
+  const newSession = await LabSession.create({
+    course: course._id,
+    section: normalizedSection,   
+    title,
+    date,
+    startTime,
+    endTime,
+    description,
+    maxMarks,
+    attendance: initialAttendance
+  });
+
+  res.status(201).json({
+    message: 'Lab session created successfully.',
+    session: newSession
+  });
 });
+
 
 // @desc    Fetch Sessions for a course
 // @route   GET /api/faculty/sessions/course/:courseCode
@@ -115,7 +154,12 @@ exports.getSessionsByCourse = asyncHandler(async (req, res) => {
     const { courseCode } = req.params;
     const facultyId = req.user.id;
 
-    const course = await Course.findOne({ code: courseCode.toUpperCase(), faculty: facultyId });
+    const course = await Course.findOne({
+        code: courseCode.toUpperCase(),
+        section: req.query.section,
+        faculty: facultyId
+    });
+
     if (!course) {
         res.status(404);
         throw new Error('Course not found or faculty not assigned.');
@@ -132,18 +176,22 @@ exports.getSessionsByCourse = asyncHandler(async (req, res) => {
 // @access  Private (Faculty)
 exports.getPendingEnrollments = asyncHandler(async (req, res) => {
     const facultyId = req.user.id;
-    const courseIds = (await Course.find({ faculty: facultyId }, '_id')).map(c => c._id);
+
+    const courseIds = (
+        await Course.find({ faculty: facultyId }, '_id')
+    ).map(c => c._id);
 
     const pendingRequests = await Enrollment.find({ 
         course: { $in: courseIds }, 
         status: 'pending' 
     })
     .populate('student', 'firstName lastName email') 
-    .populate('course', 'name code')
+    .populate('course', 'name code section')  // ✅ SECTION INCLUDED
     .lean();
     
     res.json({ requests: pendingRequests });
 });
+
 
 // @desc    Approve/Reject Enrollment
 // @route   PUT /api/faculty/enrollment/:requestId
@@ -214,7 +262,14 @@ exports.getReviewData = asyncHandler(async (req, res) => {
 
     // Get enrolled students from Enrollment model to ensure correct and up-to-date list
     const Enrollment = require('../models/Enrollment');
-    const enrolledRecords = await Enrollment.find({ course: session.course._id, status: 'approved' }).populate('student', 'firstName lastName email').lean();
+    const enrolledRecords = await Enrollment.find({ 
+        course: session.course._id, 
+        status: 'approved',
+        section: session.course.section   // ✅ CRITICAL SECTION FILTER
+    })
+    .populate('student', 'firstName lastName email')
+    .lean();
+
 
     const SubmissionModel = require('../models/Submission');
     const submissions = await SubmissionModel.find({ session: sessionId }).lean();
