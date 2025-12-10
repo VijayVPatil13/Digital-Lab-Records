@@ -8,6 +8,10 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
     const [grades, setGrades] = useState({});
     const [message, setMessage] = useState(null);
 
+    // ✅ NEW STATES FOR BULK GRADE (NON-BREAKING)
+    const [bulkMarks, setBulkMarks] = useState('');
+    const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+
     useEffect(() => {
         const initialGrades = {};
 
@@ -29,7 +33,6 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
         setGrades(initialGrades);
     }, [studentData]);
 
-    
     useEffect(() => {
         if (!message) return;
 
@@ -47,6 +50,7 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
         }));
     };
 
+    // ✅ ORIGINAL INDIVIDUAL GRADING (UNCHANGED)
     const handleGradeSubmission = async (studentId) => {
         const gradeInfo = grades[studentId];
 
@@ -78,7 +82,6 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
                 feedback: gradeInfo.feedback
             });
 
-            
             setMessage({
                 type: 'success',
                 text: `Marks saved for ${
@@ -94,7 +97,7 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
                     ...prev[studentId],
                     marks: response.data.submission.marks,
                     feedback: response.data.submission.feedback || '',
-                    isGraded: true,     
+                    isGraded: true,
                     isSubmitting: false,
                 }
             }));
@@ -111,10 +114,67 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
         }
     };
 
+    // ✅✅✅ NEW: BULK GRADE (NON-BREAKING ADDITION)
+    const handleGradeAll = async () => {
+        if (bulkMarks === '' || isNaN(bulkMarks)) {
+            setMessage({ type: 'error', text: 'Enter valid marks first.' });
+            return;
+        }
+
+        const numericMarks = Number(bulkMarks);
+
+        if (numericMarks < 0 || numericMarks > session.maxMarks) {
+            setMessage({ type: 'error', text: `Marks must be between 0 and ${session.maxMarks}` });
+            return;
+        }
+
+        const studentsToGrade = studentData.filter(
+            item => item.hasSubmitted && !item.submission?.isReviewed
+        );
+
+        if (studentsToGrade.length === 0) {
+            setMessage({ type: 'error', text: 'No submitted students to grade.' });
+            return;
+        }
+
+        setIsBulkSubmitting(true);
+
+        try {
+            await Promise.all(
+                studentsToGrade.map(item =>
+                    api.put(`/submissions/grade/${item.submission._id}`, {
+                        marks: numericMarks,
+                        feedback: ''
+                    })
+                )
+            );
+
+            studentsToGrade.forEach(item => {
+                onGrade(item.student._id, {
+                    ...item.submission,
+                    marks: numericMarks,
+                    isReviewed: true
+                });
+            });
+
+            setMessage({
+                type: 'success',
+                text: 'Graded All Students with Submitted Status'
+            });
+
+            setBulkMarks('');
+
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Bulk grading failed.' });
+        } finally {
+            setIsBulkSubmitting(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
 
-            {/* TEMPORARY CONFIRMATION BANNER */}
+            {/* ✅ ORIGINAL MESSAGE BANNER */}
             {message && (
                 <div className={`p-4 rounded-lg text-sm font-medium border-l-4 ${
                     message.type === 'error'
@@ -125,6 +185,7 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
                 </div>
             )}
 
+            {/* ✅ ORIGINAL TABLE (UNCHANGED) */}
             <div className="overflow-x-auto bg-white rounded-2xl shadow-lg border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -227,6 +288,28 @@ const ReviewTable = ({ studentData, session, onGrade, navigate }) => {
 
                 </table>
             </div>
+
+            {/* ✅✅✅ NEW "GRADE ALL" SECTION ADDED AT THE END (NON-BREAKING) */}
+            <div className="flex justify-end items-center space-x-3 pt-4 border-t">
+                <input
+                    type="number"
+                    value={bulkMarks}
+                    onChange={(e) => setBulkMarks(e.target.value)}
+                    placeholder="Enter Marks"
+                    min="0"
+                    max={session.maxMarks}
+                    className="w-32 border border-gray-300 rounded-lg p-2 text-center"
+                />
+
+                <button
+                    onClick={handleGradeAll}
+                    disabled={isBulkSubmitting}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 shadow-md"
+                >
+                    {isBulkSubmitting ? 'Grading...' : 'Grade All'}
+                </button>
+            </div>
+
         </div>
     );
 };
@@ -300,15 +383,6 @@ const SessionReview = () => {
             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Review Session: {session.title}
             </h1>
-
-            {/* <p className="text-gray-700 font-medium">
-                Course: <span className="text-indigo-600 font-bold">{session.course.name}</span>
-                ({session.course.code}) | Date: {moment(session.date).format('MMM D, YYYY h:mm A')}
-            </p>
-
-            <p className="text-sm border-l-4 border-indigo-500 pl-4 italic text-gray-700 bg-white p-3 rounded-lg">
-                {session.description}
-            </p> */}
 
             <ReviewTable
                 studentData={reviewList}
