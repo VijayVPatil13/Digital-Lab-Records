@@ -9,6 +9,7 @@ const {
     createLabSession, 
     getSessionsByCourse, 
     getPendingEnrollments,
+    approveAllEnrollments,
     updateEnrollmentStatus,
     getReviewData
 } = require('../controllers/facultyController'); 
@@ -22,11 +23,20 @@ router.get('/courses/taught', getMyCourses);
 // Session and Enrollment Management
 router.post('/sessions', createLabSession);
 // This route now correctly references the imported function
-router.get('/sessions/course/:courseCode', getSessionsByCourse); 
+router.get(
+  '/sessions/course/:courseCode/:section',
+  protect,
+  restrictTo('Faculty'),
+  getSessionsByCourse
+);
+
 router.get('/enrollment/pending', getPendingEnrollments);
 router.put('/enrollment/:requestId', updateEnrollmentStatus);
 
 // Review/Grading
 router.get('/review/:sessionId', getReviewData);
+
+// Bulk Enrollment Approval
+router.post('/enrollment/approve-all', approveAllEnrollments);
 
 module.exports = router;

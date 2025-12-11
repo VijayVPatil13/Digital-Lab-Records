@@ -71,13 +71,13 @@ router.get('/id/:submissionId', protect, restrictTo('Faculty'), async (req, res)
             .populate({
                 path: 'session',
                 select: 'title date startTime endTime description maxMarks course section',
-                populate: { path: 'course', select: 'name code' }
+                populate: { path: 'course', select: 'name code faculty' }
             })
             .populate('course', 'name code');
 
         if (!submission) return res.status(404).json({ message: 'Submission not found.' });
 
-        const facultyOwnsCourse = submission.course?.faculty?.toString?.() === req.user.id;
+        const facultyOwnsCourse = submission.session.course.faculty.toString() === req.user.id;
         if (!facultyOwnsCourse) {
             return res.status(403).json({ message: 'Not authorized to view this submission.' });
         }

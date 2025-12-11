@@ -146,17 +146,16 @@ exports.createLabSession = asyncHandler(async (req, res) => {
   });
 });
 
-
-// @desc    Fetch Sessions for a course
-// @route   GET /api/faculty/sessions/course/:courseCode
+// @desc    Fetch Sessions for a course (SECTION AWARE)
+// @route   GET /api/faculty/sessions/course/:courseCode/:section
 // @access  Private (Faculty)
 exports.getSessionsByCourse = asyncHandler(async (req, res) => {
-    const { courseCode } = req.params;
+    const { courseCode, section } = req.params;
     const facultyId = req.user.id;
 
     const course = await Course.findOne({
         code: courseCode.toUpperCase(),
-        section: req.query.section,
+        section: section.toUpperCase(),
         faculty: facultyId
     });
 
@@ -165,10 +164,14 @@ exports.getSessionsByCourse = asyncHandler(async (req, res) => {
         throw new Error('Course not found or faculty not assigned.');
     }
 
-    const sessions = await LabSession.find({ course: course._id }).sort({ date: -1 });
+    const sessions = await LabSession.find({
+        course: course._id,
+        section: section.toUpperCase()
+    }).sort({ date: -1 });
 
     res.json({ course, sessions });
 });
+
 
 
 // @desc    Get All Pending Enrollment Requests
@@ -265,7 +268,7 @@ exports.getReviewData = asyncHandler(async (req, res) => {
     const enrolledRecords = await Enrollment.find({ 
         course: session.course._id, 
         status: 'approved',
-        section: session.course.section   // ✅ CRITICAL SECTION FILTER
+        section: session.section   
     })
     .populate('student', 'firstName lastName email')
     .lean();
@@ -298,6 +301,50 @@ exports.getReviewData = asyncHandler(async (req, res) => {
     res.json({ session, reviewList });
 });
 
+// @desc    Approve all pending enrollments for this faculty
+// @route   POST /api/faculty/enrollment/approve-all
+// @access  Private (Faculty)
+exports.approveAllEnrollments = asyncHandler(async (req, res) => {
+    const facultyId = req.user.id;
+
+    // Find all courses taught by this faculty
+    const courseIds = (
+        await Course.find({ faculty: facultyId }, '_id')
+    ).map(c => c._id);
+
+    // Find all pending enrollments
+    const pending = await Enrollment.find({
+        course: { $in: courseIds },
+        status: 'pending'
+    });
+
+    if (pending.length === 0) {
+        return res.json({ message: "No pending enrollments." });
+    }
+
+    // Update each enrollment
+    for (const enrollment of pending) {
+        enrollment.status = 'approved';
+        await enrollment.save();
+
+        await Course.findByIdAndUpdate(
+            enrollment.course,
+            { $addToSet: { students: enrollment.student } }
+        );
+
+        await User.findByIdAndUpdate(
+            enrollment.student,
+            { $addToSet: { enrolledCourses: enrollment.course } }
+        );
+    }
+
+    res.json({ 
+        message: "All Pending Enrollments Accepted", 
+        count: pending.length 
+    });
+});
+
+
 module.exports = {
     getMyCourses: exports.getMyCourses,
     createCourse: exports.createCourse, // EXPORTED NEW FUNCTION
@@ -305,5 +352,6 @@ module.exports = {
     getSessionsByCourse: exports.getSessionsByCourse,
     getPendingEnrollments: exports.getPendingEnrollments,
     updateEnrollmentStatus: exports.updateEnrollmentStatus,
-    getReviewData: exports.getReviewData
+    getReviewData: exports.getReviewData,
+    approveAllEnrollments: exports.approveAllEnrollments,
 };

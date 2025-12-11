@@ -104,63 +104,71 @@ router.get('/courses/enrolled', async (req, res) => {
 
 // --- 3. GET /labs/:courseCode (UNCHANGED)
 // --- 3. GET /labs/:courseCode (NOW SECTION-SAFE)
-router.get('/labs/:courseCode', async (req, res) => {
-    try {
-        const studentId = req.user.id;
+router.get('/labs/:courseCode/:section', async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const courseCode = req.params.courseCode.toUpperCase();
+    const section = req.params.section.toUpperCase();
 
-        // Find the student's APPROVED enrollment for this course
-        const enrollment = await Enrollment.findOne({
-            student: studentId,
-            status: 'approved'
-        }).populate('course');
+    // ✅ 1. FIND EXACT ENROLLMENT (COURSE + SECTION)
+    const enrollment = await Enrollment.findOne({
+      student: studentId,
+      section: section,
+      status: 'approved'
+    }).populate('course');
 
-        if (!enrollment || enrollment.course.code !== req.params.courseCode.toUpperCase()) {
-            return res.status(403).json({ message: 'Not enrolled in this course.' });
-        }
-
-        const { course, section } = enrollment;
-
-        // FILTER LABS BY COURSE + SECTION
-        const sessions = await LabSession.find({ 
-            course: course._id, 
-            section 
-        }).sort({ date: 1 });
-
-        // FILTER SUBMISSIONS BY SECTION
-        const submissions = await Submission.find({
-            student: studentId,
-            session: { $in: sessions.map(s => s._id) },
-            section
-        });
-
-        const labs = sessions.map(session => {
-            const submission = submissions.find(sub => sub.session.equals(session._id));
-
-            return {
-                ...session.toObject(),
-                submissionStatus: submission ? 'Submitted' : 'Pending',
-                submissionDetails: submission
-                    ? {
-                        marks: submission.marks,
-                        feedback: submission.feedback,
-                        submittedAt: submission.submittedAt,
-                        submittedCode: submission.submittedCode,
-                        sessionId: session._id,
-                        submissionId: submission._id
-                    }
-                    : {
-                        sessionId: session._id,
-                        submissionId: null
-                    }
-            };
-        });
-
-        res.json({ course, section, labs });
-
-    } catch (error) {
-        console.error('Error fetching student labs:', error);
-        res.status(500).json({ message: 'Error fetching lab sessions.' });
+    if (!enrollment || enrollment.course.code !== courseCode) {
+      return res.status(403).json({
+        message: 'Not enrolled in this course and section.'
+      });
     }
+
+    const { course } = enrollment;
+
+    // ✅ 2. FETCH LAB SESSIONS (SAFE EVEN IF EMPTY)
+    const sessions = await LabSession.find({
+      course: course._id,
+      section: section
+    }).sort({ date: 1 });
+
+    // ✅ 3. FETCH SUBMISSIONS
+    const submissions = await Submission.find({
+      student: studentId,
+      session: { $in: sessions.map(s => s._id) },
+      section: section
+    });
+
+    // ✅ 4. MAP LAB STATUS
+    const labs = sessions.map(session => {
+      const submission = submissions.find(sub =>
+        sub.session.equals(session._id)
+      );
+
+      return {
+        ...session.toObject(),
+        submissionStatus: submission ? 'Submitted' : 'Pending',
+        submissionDetails: submission
+          ? {
+              marks: submission.marks,
+              feedback: submission.feedback,
+              submittedAt: submission.submittedAt,
+              submittedCode: submission.submittedCode,
+              sessionId: session._id,
+              submissionId: submission._id
+            }
+          : {
+              sessionId: session._id,
+              submissionId: null
+            }
+      };
+    });
+
+    res.json({ course, section, labs });
+
+  } catch (error) {
+    console.error('Error fetching student labs:', error);
+    res.status(500).json({ message: 'Error fetching lab sessions.' });
+  }
 });
 
 
