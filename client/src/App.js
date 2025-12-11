@@ -32,11 +32,11 @@ function App() {
                         
                         {/* STUDENT ROUTES */}
                         <Route path="/student/dashboard" element={<ProtectedRoute role="Student"><StudentDashboard /></ProtectedRoute>} />
-                        <Route path="/student/course/:courseCode/labs" element={<ProtectedRoute role="Student"><LabSubmission /></ProtectedRoute>} />
+                        <Route path="/student/course/:courseCode/:section/labs" element={<ProtectedRoute role="Student"><LabSubmission /></ProtectedRoute>} />
 
                         {/* FACULTY ROUTES */}
                         <Route path="/faculty/dashboard" element={<ProtectedRoute role="Faculty"><FacultyDashboard /></ProtectedRoute>} />
-                        <Route path="/faculty/course/:courseCode/sessions" element={<ProtectedRoute role="Faculty"><SessionManager /></ProtectedRoute>} />
+                        <Route path="/faculty/course/:courseCode/:section/sessions" element={<ProtectedRoute role="Faculty"><SessionManager /></ProtectedRoute>} />
                         <Route path="/faculty/session/:sessionId/review" element={<ProtectedRoute role="Faculty"><SessionReview /></ProtectedRoute>} />
                         <Route path="/faculty/submission/:submissionId" element={<ProtectedRoute role="Faculty"><SubmissionDetail /></ProtectedRoute>} />
                         {/* ADMIN ROUTE */}

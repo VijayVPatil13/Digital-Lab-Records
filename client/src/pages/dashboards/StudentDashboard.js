@@ -68,7 +68,7 @@ const StudentDashboard = () => {
     try {
       const response = await api.post('/student/enroll', { 
         courseCode: joinCourseCode,
-        section: joinSection.toUpperCase()   // ✅ SECTION ADDED
+        section: joinSection.toUpperCase()   //  SECTION ADDED
       });
 
       setMessage({ type: 'success', text: response.data.message });
@@ -85,7 +85,7 @@ const StudentDashboard = () => {
   };
 
   const handleAccessLabs = (course) => {
-    navigate(`/student/course/${course.code}/labs`); 
+    navigate(`/student/course/${course.code}/${course.section}/labs`);
   };
 
   return (

@@ -82,8 +82,10 @@ const FacultyDashboard = () => {
   };
 
   const handleManageSessions = (course) => {
-    navigate(`/faculty/course/${course.code}/sessions`); 
+    navigate(`/faculty/course/${course.code}/${course.section}/sessions`);
   };
+
+
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 bg-gradient-to-br from-indigo-50 to-blue-50 min-h-screen rounded-xl">

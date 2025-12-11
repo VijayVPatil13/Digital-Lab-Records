@@ -68,6 +68,21 @@ const EnrollmentApproval = ({ onActionProcessed }) => {
         }
     };
 
+    const handleApproveAll = async () => {
+        try {
+            const response = await api.post('/faculty/enrollment/approve-all');
+
+            setMessage({ type: 'success', text: response.data.message });
+
+            fetchRequests();        // Refresh pending list
+            onActionProcessed?.();  // Refresh dashboard badge count
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Failed to approve all.';
+            setMessage({ type: 'error', text: msg });
+        }
+    };
+
+
     if (loading) return <LoadingSpinner />;
     if (error) return <p className="text-sm text-red-600 p-3 rounded-lg bg-red-50">⚠️ {error}</p>;
     if (requests.length === 0 && !message) return null; 
@@ -93,6 +108,16 @@ const EnrollmentApproval = ({ onActionProcessed }) => {
                     <h2 className="text-xl font-bold text-yellow-800 mb-2">
                         🔔 Pending Enrollments ({requests.length})
                     </h2>
+
+                    {requests.length > 0 && (
+                        <button
+                            onClick={handleApproveAll}
+                            className="px-4 py-2 bg-green-700 text-white rounded-md shadow hover:bg-green-800 font-semibold"
+                        >
+                            Accept All Pending Enrollments
+                        </button>
+                    )}
+
 
                     <ul className="space-y-3">
                         {requests.map((req) => (

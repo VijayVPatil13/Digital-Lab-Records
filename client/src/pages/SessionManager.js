@@ -11,7 +11,7 @@ import CreateLabForm from '../components/forms/CreateLabForm'; // Assuming the f
 
 // SessionManager Component (Parent)
 const SessionManager = () => {
-    const { courseCode } = useParams();
+    const { courseCode, section } = useParams();
     const navigate = useNavigate();
     const [course, setCourse] = useState(null);
     const [sessions, setSessions] = useState([]);
@@ -32,17 +32,22 @@ const SessionManager = () => {
     const fetchSessions = useCallback(async () => {
         setLoading(true);
         try {
-            // GET /api/faculty/sessions/course/:courseCode
-            const response = await api.get(`/faculty/sessions/course/${courseCode}`); 
+            const response = await api.get(
+            `/faculty/sessions/course/${courseCode}/${section}`
+            );
             setSessions(response.data.sessions);
             setCourse(response.data.course);
             setMessage(null);
         } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to load sessions.' });
+            setMessage({
+            type: 'error',
+            text: error.response?.data?.message || 'Failed to load sessions.'
+            });
         } finally {
             setLoading(false);
         }
-    }, [courseCode]);
+    }, [courseCode, section]);
+
 
     useEffect(() => {
         fetchSessions();
@@ -100,7 +105,12 @@ const SessionManager = () => {
         { 
             key: 'new', 
             label: 'Create New Session', 
-            content: <CreateLabForm courseCode={courseCode} onSuccess={handleNewSessionSuccess} onError={setMessage} /> 
+            content: <CreateLabForm 
+                courseCode={courseCode} 
+                section={section}
+                onSuccess={handleNewSessionSuccess} 
+                onError={setMessage} 
+                />
         },
     ];
 
@@ -110,7 +120,7 @@ const SessionManager = () => {
                 Manage Sessions for "{course?.name || courseCode}"
             </h1>
             <p className="text-gray-600">Course ID: {courseCode}</p>
-            {/* <p className="text-gray-600">Section: {courseSection}</p> */}
+            <p className="text-gray-600">Section: {section}</p>
 
             {message && (
                 <div className={`p-3 rounded-lg text-sm font-medium ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>

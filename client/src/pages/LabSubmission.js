@@ -164,7 +164,7 @@ const LabSessionCard = ({ lab, isSelected, onClick }) => {
 
 
 const LabSubmission = () => {
-    const { courseCode } = useParams();
+    const { courseCode, section } = useParams();
     const [course, setCourse] = useState(null);
     const [labs, setLabs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -174,22 +174,29 @@ const LabSubmission = () => {
     const fetchLabsAndSubmissions = useCallback(async () => {
         setLoading(true);
         setError(null);
-        try {
-            const response = await api.get(`/student/labs/${courseCode}`);
-            const { course, labs } = response.data;
-            
-            setCourse(course);
-            setLabs(labs);
 
-            const newSelection = labs.find(lab => lab._id === selectedLab?._id) || labs[0];
-            setSelectedLab(newSelection || null);
-            
+        try {
+            const response = await api.get(
+                `/student/labs/${courseCode}/${section}`
+            );
+
+            const { course, labs } = response.data;
+
+            setCourse(course || null);
+            setLabs(labs || []);
+
+            const newSelection =
+                labs?.find(lab => lab._id === selectedLab?._id) || labs?.[0] || null;
+
+            setSelectedLab(newSelection);
+
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to load lab sessions.');
         } finally {
             setLoading(false);
         }
-    }, [courseCode, selectedLab?._id]);
+    }, [courseCode, section, selectedLab?._id]);
+
 
     useEffect(() => {
         fetchLabsAndSubmissions();
@@ -207,26 +214,41 @@ const LabSubmission = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 <div className="lg:col-span-1 space-y-4">
-                    <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-green-500 pb-2">Lab Sessions</h2>
-                    {labs.map((lab) => (
-                        <LabSessionCard 
-                            key={lab._id} 
-                            lab={lab} 
-                            isSelected={selectedLab?._id === lab._id}
-                            onClick={setSelectedLab}
-                        />
-                    ))}
+                    <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-green-500 pb-2">
+                        Lab Sessions
+                    </h2>
+
+                    {labs.length === 0 ? (
+                        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg border-l-4 border-yellow-500 font-semibold">
+                            No lab sessions have been created for this course yet.
+                        </div>
+                    ) : (
+                        labs.map((lab) => (
+                            <LabSessionCard 
+                                key={lab._id} 
+                                lab={lab} 
+                                isSelected={selectedLab?._id === lab._id}
+                                onClick={setSelectedLab}
+                            />
+                        ))
+                    )}
                 </div>
 
+
                 <div className="lg:col-span-2 space-y-6">
-                    {selectedLab && (
+                    {selectedLab ? (
                         <SubmissionBox 
                             lab={selectedLab} 
                             onSubmissionSuccess={fetchLabsAndSubmissions}
                             onError={setError}
                         />
+                    ) : (
+                        <div className="p-6 bg-blue-50 text-blue-700 rounded-xl border-l-4 border-blue-500 font-semibold">
+                            Select a lab session to view or submit your work.
+                        </div>
                     )}
                 </div>
+
             </div>
         </div>
     );
