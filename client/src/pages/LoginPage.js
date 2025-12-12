@@ -19,8 +19,13 @@ const LoginPage = () => {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-gray-100">
-                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center border-b border-gray-200 pb-4">
-                    Digital Lab Records
+                <h1 className="flex items-center justify-center space-x-3 text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-center border-b border-gray-200 pb-4">
+                    <img 
+                        src="/logo.png" 
+                        alt="Logo" 
+                        className="w-12 h-12 rounded-lg shadow-sm"
+                    />
+                    <span>Digital Lab Records</span>
                 </h1>
 
                 {/* Mode Selector (Tabs) */}
