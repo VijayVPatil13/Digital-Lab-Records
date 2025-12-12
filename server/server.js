@@ -16,7 +16,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: "*", // or specific IPs: [ "http://<client-ip>:3000" ]
+  origin: ["http://10.20.50.251:3000", "http://localhost:3000"], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -48,6 +48,7 @@ app.use(errorHandler);
 
 // Port and Server Start
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '10.20.50.251', () => {
-  console.log(`Server running on http://10.20.50.251:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
