@@ -95,8 +95,18 @@ const StudentDashboard = () => {
       </h1>
 
       <p className="text-lg text-gray-700 font-medium">
-        Welcome, <span className="text-green-600 font-bold">{fullName || 'Student'}</span>. View your enrolled classes or join a new one.
+        Welcome,&nbsp;
+        <span className="text-green-600 font-bold">
+          {fullName || 'Student'}
+          {user?.usn && (
+            <span className="text-gray-600 font-semibold">
+              {' '}({user.usn})
+            </span>
+          )}
+        </span>.
+        &nbsp;View your enrolled classes or join a new one.
       </p>
+
 
       {message && (
         <div

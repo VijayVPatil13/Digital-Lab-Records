@@ -5,7 +5,9 @@ import api from '../utils/api';
 import moment from 'moment';
 import TabbedContainer from '../components/common/TabbedContainer';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import CreateLabForm from '../components/forms/CreateLabForm'; // Assuming the functional version is used
+import CreateLabForm from '../components/forms/CreateLabForm'; 
+import EnrolledStudents from '../components/role-specific/EnrolledStudents';
+
 
 // ... (NewSessionForm component uses CreateLabForm logic but simplified here) ...
 
@@ -110,9 +112,20 @@ const SessionManager = () => {
                 section={section}
                 onSuccess={handleNewSessionSuccess} 
                 onError={setMessage} 
-                />
+            />
         },
+        {
+            key: 'students',
+            label: 'Enrolled Students',
+            content: (
+                <EnrolledStudents
+                    courseCode={courseCode}
+                    section={section}
+                />
+            )
+        }
     ];
+
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">

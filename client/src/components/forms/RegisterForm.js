@@ -12,7 +12,7 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         fullName: '',
         email: '',
         password: '',
-        role: 'Student'
+        usn: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,13 +21,13 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // EMAIL VALIDATION FUNCTION
+    // Email validation
     const isValidEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.(com|net|org|edu)$/i;
         return emailRegex.test(email);
     };
 
-    // FULL NAME VALIDATION FUNCTION (First + Last Name)
+    // Full name validation
     const isValidFullName = (name) => {
         const parts = name.trim().split(/\s+/);
         return parts.length >= 2;
@@ -38,23 +38,20 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
         onError(null);
         setIsSubmitting(true);
 
-        //FULL NAME VALIDATION
         if (!isValidFullName(formData.fullName)) {
-            onError({ type: 'error', text: 'Please enter first name and last name' });
+            onError({ type: 'error', text: 'Please enter first and last name' });
             setIsSubmitting(false);
             return;
         }
 
-        //EMAIL VALIDATION
         if (!isValidEmail(formData.email)) {
-            onError({ type: 'error', text: 'Please enter valid email' });
+            onError({ type: 'error', text: 'Please enter a valid email' });
             setIsSubmitting(false);
             return;
         }
 
-        //ROLE VALIDATION
-        if (formData.role === 'Admin') {
-            onError({ type: 'error', text: 'Admin accounts must be created directly by an administrator.' });
+        if (!formData.usn.trim()) {
+            onError({ type: 'error', text: 'USN is required' });
             setIsSubmitting(false);
             return;
         }
@@ -64,13 +61,13 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
                 fullName: formData.fullName,
                 email: formData.email,
                 password: formData.password,
-                role: formData.role
+                usn: formData.usn,
+                role: 'Student' // enforced
             });
 
             login(response.data.token, response.data.user);
 
-            const role = response.data.user.role.toLowerCase();
-            navigate(`/${role}/dashboard`, { replace: true });
+            navigate('/student/dashboard', { replace: true });
 
             if (onSignupSuccess) onSignupSuccess();
 
@@ -84,66 +81,67 @@ const RegisterForm = ({ onError, onSignupSuccess }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Full Name</label>
-                <input 
-                    type="text" 
-                    name="fullName" 
-                    value={formData.fullName} 
-                    onChange={handleChange} 
-                    required 
-                    className="w-full p-3 border rounded-lg" 
+                <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-lg"
+                />
+            </div>
+
+            <div>
+                <label className="block text-gray-700 font-medium mb-1">USN</label>
+                <input
+                    type="text"
+                    name="usn"
+                    value={formData.usn}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-lg"
                 />
             </div>
 
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Email</label>
-                <input 
-                    type="email" 
-                    name="email" 
-                    value={formData.email} 
-                    onChange={handleChange} 
-                    required 
-                    className="w-full p-3 border rounded-lg" 
+                <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-lg"
                 />
             </div>
 
             <div>
                 <label className="block text-gray-700 font-medium mb-1">Password</label>
-                <input 
-                    type="password" 
-                    name="password" 
-                    value={formData.password} 
-                    onChange={handleChange} 
-                    required 
-                    className="w-full p-3 border rounded-lg" 
-                />
-            </div>
-
-            <div>
-                <label className="block text-gray-700 font-medium mb-1">Role</label>
-                <select 
-                    name="role" 
-                    value={formData.role} 
-                    onChange={handleChange} 
-                    required 
+                <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
                     className="w-full p-3 border rounded-lg"
-                >
-                    <option value="Student">Student</option>
-                </select>
+                />
             </div>
 
             <button
                 type="submit"
-                className={`w-full p-3 rounded-lg font-semibold transition ${
-                    isSubmitting 
-                    ? 'bg-green-400 cursor-not-allowed' 
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white`}
                 disabled={isSubmitting}
+                className={`w-full p-3 rounded-lg font-semibold transition ${
+                    isSubmitting
+                        ? 'bg-green-400 cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700'
+                } text-white`}
             >
                 {isSubmitting ? 'Registering...' : 'Register & Login'}
             </button>
+
         </form>
     );
 };

@@ -31,9 +31,8 @@ const CreateLabForm = ({ courseCode, section, onSuccess, onError }) => {   // �
               endTime: formData.endTime,
               description: formData.description,
               maxMarks: parseInt(formData.maxMarks),
-
-              courseCode: courseCode,   // ✅ already present
-              section: section,         // ✅ CRITICAL FIX (ADDED)
+              courseCode: courseCode,   
+              section: section,        
           };
           
           await api.post('/faculty/sessions', payload);

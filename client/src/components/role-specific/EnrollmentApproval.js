@@ -127,10 +127,18 @@ const EnrollmentApproval = ({ onActionProcessed }) => {
                             >
                                 <div className="text-sm space-y-1">
                                     <p className="font-medium text-gray-800">
-                                        {req.student?.firstName && req.student?.lastName 
-                                            ? `${req.student.firstName} ${req.student.lastName}` 
+                                        {req.student?.firstName && req.student?.lastName
+                                            ? `${req.student.firstName} ${req.student.lastName}`
                                             : req.student?.email}
+
+                                        {req.student?.usn && (
+                                            <span className="text-gray-600 font-semibold">
+                                            {' '}({req.student.usn})
+                                            </span>
+                                        )}
                                     </p>
+
+
 
                                     <p className="text-xs text-gray-600">
                                         Course: {req.course.code} - {req.course.name}
