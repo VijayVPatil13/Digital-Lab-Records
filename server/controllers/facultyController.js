@@ -188,12 +188,13 @@ exports.getPendingEnrollments = asyncHandler(async (req, res) => {
         course: { $in: courseIds }, 
         status: 'pending' 
     })
-    .populate('student', 'firstName lastName email') 
-    .populate('course', 'name code section')  // ✅ SECTION INCLUDED
+    .populate('student', 'firstName lastName email usn')   
+    .populate('course', 'name code section')
     .lean();
-    
+
     res.json({ requests: pendingRequests });
 });
+
 
 
 // @desc    Approve/Reject Enrollment
@@ -270,7 +271,7 @@ exports.getReviewData = asyncHandler(async (req, res) => {
         status: 'approved',
         section: session.section   
     })
-    .populate('student', 'firstName lastName email')
+    .populate('student', 'firstName lastName email usn')
     .lean();
 
 
@@ -345,13 +346,108 @@ exports.approveAllEnrollments = asyncHandler(async (req, res) => {
 });
 
 
+// @desc    Get enrolled students with average marks for a course (SECTION SAFE)
+// @route   GET /api/faculty/courses/:courseCode/:section/students
+// @access  Private (Faculty)
+// @desc Get enrolled students with average marks (SOURCE: Course.students)
+// @route GET /api/faculty/courses/:courseCode/:section/students
+// @desc    Get enrolled students with avg marks & assignment count
+// @route   GET /api/faculty/courses/:courseCode/:section/students
+// @access  Private (Faculty)
+exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
+    const { courseCode, section } = req.params;
+    const facultyId = req.user.id;
+
+    // 1️⃣ Find course
+    const course = await Course.findOne({
+        code: courseCode.toUpperCase(),
+        section: section.toUpperCase(),
+        faculty: facultyId
+    }).populate('students', 'firstName lastName fullName usn');
+
+    if (!course) {
+        res.status(404);
+        throw new Error("Course not found or unauthorized");
+    }
+
+    const validStudents = (course.students || []).filter(Boolean);
+
+    if (validStudents.length === 0) {
+        return res.json({ students: [] });
+    }
+
+    const studentIds = validStudents.map(s => s._id);
+
+    const Submission = require('../models/Submission');
+
+    // 2️⃣ ONE aggregation for BOTH count and average
+    const stats = await Submission.aggregate([
+        {
+            $match: {
+                course: course._id,
+                section: course.section,
+                student: { $in: studentIds }
+            }
+        },
+        {
+            $group: {
+                _id: "$student",
+                assignmentsSubmitted: { $sum: 1 },
+                totalMarks: { $sum: "$marks" }
+            }
+        },
+        {
+            $project: {
+                assignmentsSubmitted: 1,
+                averageMarks: {
+                    $cond: [
+                        { $eq: ["$assignmentsSubmitted", 0] },
+                        0,
+                        { $divide: ["$totalMarks", "$assignmentsSubmitted"] }
+                    ]
+                }
+            }
+        }
+    ]);
+
+    // 3️⃣ Build lookup map
+    const statsMap = {};
+    stats.forEach(s => {
+        statsMap[s._id.toString()] = {
+            assignmentsSubmitted: s.assignmentsSubmitted,
+            averageMarks: Number(s.averageMarks.toFixed(2))
+        };
+    });
+
+    // 4️⃣ FINAL response (ONLY from statsMap)
+    const result = validStudents.map(s => {
+        const stat = statsMap[s._id.toString()] || {
+            assignmentsSubmitted: 0,
+            averageMarks: 0
+        };
+
+        return {
+            usn: s.usn,
+            name: s.fullName || `${s.firstName} ${s.lastName}`,
+            section: course.section,
+            assignmentsSubmitted: stat.assignmentsSubmitted,
+            averageMarks: stat.averageMarks
+        };
+    });
+
+    res.json({ students: result });
+});
+
+
+
 module.exports = {
     getMyCourses: exports.getMyCourses,
-    createCourse: exports.createCourse, // EXPORTED NEW FUNCTION
+    createCourse: exports.createCourse, 
     createLabSession: exports.createLabSession,
     getSessionsByCourse: exports.getSessionsByCourse,
     getPendingEnrollments: exports.getPendingEnrollments,
     updateEnrollmentStatus: exports.updateEnrollmentStatus,
     getReviewData: exports.getReviewData,
+    getEnrolledStudentsWithAverage: exports.getEnrolledStudentsWithAverage,
     approveAllEnrollments: exports.approveAllEnrollments,
 };

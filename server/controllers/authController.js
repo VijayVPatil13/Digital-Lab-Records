@@ -12,7 +12,26 @@ const generateToken = (id, role, fullName) => {
 };
 
 exports.registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, password, role } = req.body; 
+    const { fullName, email, password, role, usn } = req.body;
+
+    // Normalize USN once (canonical form)
+    const normalizedUSN = usn ? usn.trim().toUpperCase() : undefined;
+
+    // Enforce USN format for Students 
+    if (role === 'Student') {
+        if (!normalizedUSN) {
+            return res.status(400).json({ message: 'USN is required for student registration.' });
+        }
+
+        const usnRegex = /^[0-9A-Z]{10}$/;
+
+        if (!usnRegex.test(normalizedUSN)) {
+            return res.status(400).json({
+                message: 'Invalid USN format. Expected 10 alphanumeric uppercase characters.'
+            });
+        }
+    }
+
 
     if (!fullName || !email || !password || !role) {
         return res.status(400).json({ message: 'Please enter all fields.' });
@@ -20,6 +39,10 @@ exports.registerUser = asyncHandler(async (req, res) => {
     // Security check: Only allow public registration for Students now
     if (!['Student'].includes(role)) {
         return res.status(403).json({ message: 'Only Student accounts can be registered publicly. Faculty/Admin accounts must be created by an administrator.' });
+    }
+
+    if (role === 'Student' && !usn) {
+        return res.status(400).json({ message: 'USN is required for student registration.' });
     }
 
     try {
@@ -43,6 +66,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
             email, 
             passwordHash: password, // Mapped to passwordHash for hashing hook
             role, 
+            usn: role === 'Student' ? normalizedUSN : undefined,
             enrolledCourses: [], 
         }); 
 
@@ -52,6 +76,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
                 fullName: newUser.fullName, 
                 email: newUser.email,
                 role: newUser.role,
+                usn: newUser.usn
             },
             token: generateToken(newUser._id, newUser.role, newUser.fullName),
             message: `${newUser.role} registered and logged in successfully!`
@@ -175,6 +200,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
                     fullName: user.fullName,
                     email: user.email,
                     role: user.role,
+                    usn: user.usn
                 },
                 token: generateToken(user._id, user.role, user.fullName), 
                 message: 'Login successful'
@@ -187,3 +213,5 @@ exports.loginUser = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Server error during login. Check server logs.' }); 
     }
 });
+
+

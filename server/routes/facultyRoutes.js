@@ -11,7 +11,8 @@ const {
     getPendingEnrollments,
     approveAllEnrollments,
     updateEnrollmentStatus,
-    getReviewData
+    getReviewData,
+    getEnrolledStudentsWithAverage
 } = require('../controllers/facultyController'); 
 
 router.use(protect, restrictTo('Faculty')); 
@@ -38,5 +39,8 @@ router.get('/review/:sessionId', getReviewData);
 
 // Bulk Enrollment Approval
 router.post('/enrollment/approve-all', approveAllEnrollments);
+
+router.get('/courses/:courseCode/:section/students', getEnrolledStudentsWithAverage);
+
 
 module.exports = router;

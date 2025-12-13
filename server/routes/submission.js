@@ -67,7 +67,7 @@ router.post('/', protect, restrictTo('Student'), async (req, res) => {
 router.get('/id/:submissionId', protect, restrictTo('Faculty'), async (req, res) => {
     try {
         const submission = await Submission.findById(req.params.submissionId)
-            .populate('student', 'firstName lastName email')
+            .populate('student', 'firstName lastName email usn') 
             .populate({
                 path: 'session',
                 select: 'title date startTime endTime description maxMarks course section',
@@ -75,9 +75,13 @@ router.get('/id/:submissionId', protect, restrictTo('Faculty'), async (req, res)
             })
             .populate('course', 'name code');
 
-        if (!submission) return res.status(404).json({ message: 'Submission not found.' });
+        if (!submission) {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
 
-        const facultyOwnsCourse = submission.session.course.faculty.toString() === req.user.id;
+        const facultyOwnsCourse =
+            submission.session.course.faculty.toString() === req.user.id;
+
         if (!facultyOwnsCourse) {
             return res.status(403).json({ message: 'Not authorized to view this submission.' });
         }
@@ -89,6 +93,7 @@ router.get('/id/:submissionId', protect, restrictTo('Faculty'), async (req, res)
         res.status(500).json({ message: 'Error fetching submission.' });
     }
 });
+
 
 // =======================================================
 //  INTERNAL LOOKUP (SECTION SAFE)
