@@ -1,10 +1,10 @@
 // server/controllers/facultyController.js
-
 const asyncHandler = require('express-async-handler');
 const Course = require('../models/Course');
 const LabSession = require('../models/LabSession');
 const Enrollment = require('../models/Enrollment');
 const User = require('../models/User');
+const Submission = require('../models/Submission'); // ✅ REQUIRED
 
 // @desc    Get all courses taught by the logged-in faculty
 // @route   GET /api/faculty/courses/taught
@@ -355,10 +355,11 @@ exports.approveAllEnrollments = asyncHandler(async (req, res) => {
 // @route   GET /api/faculty/courses/:courseCode/:section/students
 // @access  Private (Faculty)
 exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
+    console.log("🔥 NEW AVERAGE LOGIC ACTIVE");
+
     const { courseCode, section } = req.params;
     const facultyId = req.user.id;
 
-    // 1️⃣ Find course
     const course = await Course.findOne({
         code: courseCode.toUpperCase(),
         section: section.toUpperCase(),
@@ -371,16 +372,18 @@ exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
     }
 
     const validStudents = (course.students || []).filter(Boolean);
-
     if (validStudents.length === 0) {
         return res.json({ students: [] });
     }
 
     const studentIds = validStudents.map(s => s._id);
 
-    const Submission = require('../models/Submission');
+    // ✅ TOTAL sessions
+    const totalSessions = await LabSession.countDocuments({
+        course: course._id,
+        section: course.section
+    });
 
-    // 2️⃣ ONE aggregation for BOTH count and average
     const stats = await Submission.aggregate([
         {
             $match: {
@@ -395,35 +398,18 @@ exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
                 assignmentsSubmitted: { $sum: 1 },
                 totalMarks: { $sum: "$marks" }
             }
-        },
-        {
-            $project: {
-                assignmentsSubmitted: 1,
-                averageMarks: {
-                    $cond: [
-                        { $eq: ["$assignmentsSubmitted", 0] },
-                        0,
-                        { $divide: ["$totalMarks", "$assignmentsSubmitted"] }
-                    ]
-                }
-            }
         }
     ]);
 
-    // 3️⃣ Build lookup map
     const statsMap = {};
     stats.forEach(s => {
-        statsMap[s._id.toString()] = {
-            assignmentsSubmitted: s.assignmentsSubmitted,
-            averageMarks: Number(s.averageMarks.toFixed(2))
-        };
+        statsMap[s._id.toString()] = s;
     });
 
-    // 4️⃣ FINAL response (ONLY from statsMap)
     const result = validStudents.map(s => {
         const stat = statsMap[s._id.toString()] || {
             assignmentsSubmitted: 0,
-            averageMarks: 0
+            totalMarks: 0
         };
 
         return {
@@ -431,7 +417,10 @@ exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
             name: s.fullName || `${s.firstName} ${s.lastName}`,
             section: course.section,
             assignmentsSubmitted: stat.assignmentsSubmitted,
-            averageMarks: stat.averageMarks
+            averageMarks:
+                totalSessions === 0
+                    ? 0
+                    : Number((stat.totalMarks / totalSessions).toFixed(2))
         };
     });
 
