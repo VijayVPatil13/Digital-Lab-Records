@@ -18,7 +18,6 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
 
     const courseIds = courses.map(c => c._id);
 
-    // ✅ SECTION-WISE STUDENT COUNT FROM ENROLLMENT
     const enrollments = await Enrollment.find({
         course: { $in: courseIds },
         status: 'approved'
@@ -40,7 +39,7 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
         return {
             ...course,
             instructorName,
-            studentsCount: sectionStudents.length   // ✅ CORRECT COUNT PER SECTION
+            studentsCount: sectionStudents.length   
         };
     });
 
@@ -345,18 +344,11 @@ exports.approveAllEnrollments = asyncHandler(async (req, res) => {
     });
 });
 
-
-// @desc    Get enrolled students with average marks for a course (SECTION SAFE)
-// @route   GET /api/faculty/courses/:courseCode/:section/students
-// @access  Private (Faculty)
-// @desc Get enrolled students with average marks (SOURCE: Course.students)
-// @route GET /api/faculty/courses/:courseCode/:section/students
 // @desc    Get enrolled students with avg marks & assignment count
 // @route   GET /api/faculty/courses/:courseCode/:section/students
 // @access  Private (Faculty)
 exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
-    console.log("🔥 NEW AVERAGE LOGIC ACTIVE");
-
+    
     const { courseCode, section } = req.params;
     const facultyId = req.user.id;
 
@@ -378,7 +370,7 @@ exports.getEnrolledStudentsWithAverage = asyncHandler(async (req, res) => {
 
     const studentIds = validStudents.map(s => s._id);
 
-    // ✅ TOTAL sessions
+    
     const totalSessions = await LabSession.countDocuments({
         course: course._id,
         section: course.section
